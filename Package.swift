@@ -30,7 +30,9 @@ let package = Package(
             exclude: ["HermesCoreWebSocket", "Generated"]
         ),
         // Low-level URLSessionWebSocketTask transport.
-        .target(name: "HermesCoreWebSocket", path: "Sources/HermesCoreWebSocket"),
+        .target(name: "HermesCoreWebSocket", path: "Sources/HermesCoreWebSocket", dependencies: ["HermesLogger"]),
+        // Cross-platform logging shim (OSLog on Apple, print on Linux).
+        .target(name: "HermesLogger", path: "Sources/HermesLogger"),
         // Machine-generated wire models. No bundled resources: the generators
         // read openrpc.json from the repo root and emit only .swift files (Y6).
         .target(name: "GeneratedModels", path: "Sources/Generated"),
