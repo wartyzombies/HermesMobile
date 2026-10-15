@@ -16,3 +16,7 @@ xcuserdata/
 
 # Qodana
 .qodana/
+
+# Swiftly toolchain archives
+swiftly-*.tar.gz
+swiftly-*.tar.gz.sig
