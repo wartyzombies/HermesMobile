@@ -1,0 +1,18 @@
+# SwiftPM / build artifacts
+.build/
+.swiftpm/
+*.xcodeproj
+xcuserdata/
+
+# Local session / IDE state
+.agentbridge/
+.idea/
+.vscode/
+.DS_Store
+
+# Generated (regenerable) — keep in sync with Scripts/
+# Sources/Generated/ is committed so the package builds without Python.
+# To regenerate: python3 Scripts/gen_models.py && python3 Scripts/gen_client.py
+
+# Qodana
+.qodana/
