@@ -1099,7 +1099,7 @@ public struct BrowserManageParams: Codable, Sendable {
     }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.action = (try? c.decodeIfPresent(BrowserAction.self, forKey: .action)) ?? .string("status")
+        self.action = (try? c.decodeIfPresent(BrowserAction.self, forKey: .action)) ?? BrowserAction(rawValue: "status")
         self.url = try c.decodeIfPresent(String.self, forKey: .url)
         self.enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled)
         self.sessionId = try c.decodeIfPresent(String.self, forKey: .sessionId)
@@ -2828,7 +2828,7 @@ public struct CronManageParams: Codable, Sendable {
     }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.action = (try? c.decodeIfPresent(CronAction.self, forKey: .action)) ?? .string("list")
+        self.action = (try? c.decodeIfPresent(CronAction.self, forKey: .action)) ?? CronAction(rawValue: "list")
         self.name = try c.decodeIfPresent(String.self, forKey: .name)
         self.includeDisabled = try c.decodeIfPresent(JSONValue.self, forKey: .includeDisabled)
         self.schedule = try c.decodeIfPresent(String.self, forKey: .schedule)
@@ -4725,7 +4725,7 @@ public struct I18nCatalogParams: Codable, Sendable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         self.profile = try c.decodeIfPresent(String.self, forKey: .profile)
         self.lang = try c.decode(String.self, forKey: .lang)
-        self.surface = (try? c.decodeIfPresent(LocaleSurface.self, forKey: .surface)) ?? .string("core")
+        self.surface = (try? c.decodeIfPresent(LocaleSurface.self, forKey: .surface)) ?? LocaleSurface(rawValue: "core")
     }
 }
 
@@ -7291,7 +7291,7 @@ public struct PluginsManageParams: Codable, Sendable {
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         self.profile = try c.decodeIfPresent(String.self, forKey: .profile)
-        self.action = (try? c.decodeIfPresent(PluginsAction.self, forKey: .action)) ?? .string("list")
+        self.action = (try? c.decodeIfPresent(PluginsAction.self, forKey: .action)) ?? PluginsAction(rawValue: "list")
         self.key = try c.decodeIfPresent(String.self, forKey: .key)
         self.name = try c.decodeIfPresent(String.self, forKey: .name)
         self.enable = try c.decodeIfPresent(Bool.self, forKey: .enable)
@@ -12041,7 +12041,7 @@ public struct SkillsManageParams: Codable, Sendable {
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         self.profile = try c.decodeIfPresent(String.self, forKey: .profile)
-        self.action = (try? c.decodeIfPresent(SkillsAction.self, forKey: .action)) ?? .string("list")
+        self.action = (try? c.decodeIfPresent(SkillsAction.self, forKey: .action)) ?? SkillsAction(rawValue: "list")
         self.query = try c.decodeIfPresent(String.self, forKey: .query)
         self.page = try c.decodeIfPresent(Int64.self, forKey: .page)
         self.pageSize = try c.decodeIfPresent(Int64.self, forKey: .pageSize)
@@ -12908,7 +12908,7 @@ public struct SystemBatteryResult: Codable, Sendable {
         self.available = try c.decode(Bool.self, forKey: .available)
         self.percent = try c.decodeIfPresent(Int64.self, forKey: .percent)
         self.plugged = try c.decodeIfPresent(Bool.self, forKey: .plugged)
-        self.category = (try? c.decodeIfPresent(BatteryCategory.self, forKey: .category)) ?? .string("dim")
+        self.category = (try? c.decodeIfPresent(BatteryCategory.self, forKey: .category)) ?? BatteryCategory(rawValue: "dim")
     }
 }
 
@@ -13910,7 +13910,7 @@ public struct VoiceRecordParams: Codable, Sendable {
     }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.action = (try? c.decodeIfPresent(VoiceRecordAction.self, forKey: .action)) ?? .string("start")
+        self.action = (try? c.decodeIfPresent(VoiceRecordAction.self, forKey: .action)) ?? VoiceRecordAction(rawValue: "start")
         self.sessionId = try c.decodeIfPresent(String.self, forKey: .sessionId)
         self.profile = try c.decodeIfPresent(String.self, forKey: .profile)
     }
@@ -13947,7 +13947,7 @@ public struct VoiceToggleParams: Codable, Sendable {
     }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.action = (try? c.decodeIfPresent(VoiceToggleAction.self, forKey: .action)) ?? .string("status")
+        self.action = (try? c.decodeIfPresent(VoiceToggleAction.self, forKey: .action)) ?? VoiceToggleAction(rawValue: "status")
         self.profile = try c.decodeIfPresent(String.self, forKey: .profile)
     }
 }

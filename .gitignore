@@ -12,7 +12,9 @@ xcuserdata/
 
 # Generated (regenerable) — keep in sync with Scripts/
 # Sources/Generated/ is committed so the package builds without Python.
-# To regenerate: python3 Scripts/gen_models.py && python3 Scripts/gen_client.py
+# To regenerate: python3 Scripts/gen_models.py
+# (Scripts/gen_client.py is deprecated; see its docstring.)
+Scripts/generated/
 
 # Qodana
 .qodana/

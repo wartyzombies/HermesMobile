@@ -1,7 +1,7 @@
 import Foundation
 
-#if canImport(OSLog)
-import OSLog
+#if canImport(os)
+import os
 #endif
 
 /// Simple cross-platform logger.
@@ -12,20 +12,20 @@ public struct HermesLogger {
     public let subsystem: String
     public let category: String
 
-    #if canImport(OSLog)
-    private let logger: OSLog.Logger
+    #if canImport(os)
+    private let logger: Logger
     #endif
 
     public init(subsystem: String, category: String) {
         self.subsystem = subsystem
         self.category = category
-        #if canImport(OSLog)
-        self.logger = OSLog.Logger(subsystem: subsystem, category: category)
+        #if canImport(os)
+        self.logger = Logger(subsystem: subsystem, category: category)
         #endif
     }
 
     public func error(_ message: String) {
-        #if canImport(OSLog)
+        #if canImport(os)
         logger.error("\(message)")
         #else
         print("[ERROR][\(subsystem):\(category)] \(message)")
@@ -33,7 +33,7 @@ public struct HermesLogger {
     }
 
     public func notice(_ message: String) {
-        #if canImport(OSLog)
+        #if canImport(os)
         logger.notice("\(message)")
         #else
         print("[NOTICE][\(subsystem):\(category)] \(message)")

@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Generate Swift HermesGatewayClient (wrapper) for the tui_gateway JSON-RPC.
+"""DEPRECATED — generate Swift HermesGatewayClient (wrapper) for the tui_gateway JSON-RPC.
+
+.. deprecated::
+    Superseded by the hand-written ``Sources/HermesClient.swift`` typed facade.
+    The ``Sources/GatewayClient/`` directory this script writes to no longer
+    exists, and the file it emits declares a ``public struct HermesCoreWebSocket``
+    that duplicates the real ``HermesCoreWebSocket`` target (fixes.md R3) and
+    calls ``fatalError`` on the connect path (R2/R4). Running it will create a
+    broken, non-compiling source file. This script is kept only for historical
+    reference; do **not** run it as part of a normal build.
 
 We pull the OpenRPC spec once and emit a Swift file with typed request/result
 structures for a subset of useful methods and a thin WebSocket connector.
@@ -15,6 +24,12 @@ on top of, not a 1:1 code generator for the entire wire contract.
 from __future__ import annotations
 import json, os, re, pathlib, sys
 from pathlib import Path
+
+sys.stderr.write(
+    "gen_client.py is DEPRECATED and emits a non-compiling HermesGatewayClient.swift "
+    "(duplicate HermesCoreWebSocket, fatalError on connect). Use Sources/HermesClient.swift. "
+    "Writing to Scripts/generated/GatewayClient/ (outside the SwiftPM targets).\n"
+)
 
 CONTRACT = str(Path(__file__).resolve().parent.parent / "gateway-contract.openrpc.json")
 
@@ -68,7 +83,7 @@ def swift_type(schema: dict) -> str:
     # fallback
     return "JSONValue"
 
-OUT_DIR = Path("/opt/data/profiles/coder/cache/scratch/HermesMobile/Sources/GatewayClient")
+OUT_DIR = Path(__file__).resolve().parent / "generated" / "GatewayClient"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # 1. Swift connector (hermes-core-web-socket is a placeholder module in the package)

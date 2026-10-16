@@ -25,12 +25,12 @@ let package = Package(
         // to build a single file (fixes.md R1).
         .target(
             name: "HermesMobile",
-            dependencies: ["GeneratedModels"],
+            dependencies: ["GeneratedModels", "HermesLogger"],
             path: "Sources",
-            exclude: ["HermesCoreWebSocket", "Generated"]
+            exclude: ["HermesCoreWebSocket", "Generated", "HermesLogger"]
         ),
         // Low-level URLSessionWebSocketTask transport.
-        .target(name: "HermesCoreWebSocket", path: "Sources/HermesCoreWebSocket", dependencies: ["HermesLogger"]),
+        .target(name: "HermesCoreWebSocket", dependencies: ["HermesLogger"], path: "Sources/HermesCoreWebSocket"),
         // Cross-platform logging shim (OSLog on Apple, print on Linux).
         .target(name: "HermesLogger", path: "Sources/HermesLogger"),
         // Machine-generated wire models. No bundled resources: the generators
@@ -48,3 +48,4 @@ let package = Package(
         //   python3 Scripts/gen_client.py
     ]
 )
+

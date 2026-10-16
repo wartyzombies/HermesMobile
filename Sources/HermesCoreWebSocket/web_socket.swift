@@ -10,25 +10,28 @@ import HermesLogger
 public class HermesCoreWebSocket {
     public init() {}
 
-    /// Open a WebSocket connection to `ticket.wsUrl` using the provided URLSession.
+    /// Open a WebSocket connection to `wsUrl` using the provided URLSession.
     /// - Parameters:
     ///   - session: URLSession for making the connection.
-    ///   - ticket: WebSocket ticket (OAuth or basic auth derived).
+    ///   - wsUrl: the gateway `wss://` URL, typically the one a minted
+    ///     `WebSocketTicket` carries. Passed as a plain string so this
+    ///     transport module stays dependency-free (it must not reference the
+    ///     app target's `WebSocketTicket`).
     ///   - onMessage: closure called on incoming text/binary messages (decoded JSON).
     ///   - onError: closure called on connection errors.
     ///   - onDisconnect: closure called on clean disconnect.
     /// - Returns: the underlying `URLSessionWebSocketTask`.
-    /// - Throws: `WebSocketError.invalidURL` if the ticket URL is not a
+    /// - Throws: `WebSocketError.invalidURL` if the URL is not a
     ///   secure `wss://` URL (R6). Cleartext `ws://` is rejected outside
     ///   DEBUG builds so conversation content never travels unencrypted.
     public static func connect(
         session: URLSession,
-        ticket: WebSocketTicket,
+        wsUrl: String,
         onMessage: @escaping (Any) -> Void,
         onError: @escaping (Error) -> Void,
         onDisconnect: @escaping () -> Void
     ) async throws -> URLSessionWebSocketTask {
-        guard let url = URL(string: ticket.wsUrl) else {
+        guard let url = URL(string: wsUrl) else {
             throw WebSocketError.invalidURL
         }
 
@@ -46,24 +49,30 @@ public class HermesCoreWebSocket {
         let task = session.webSocketTask(with: url)
         task.resume()
 
-        for try await message in task.messages {
+        // Drive the read loop off `receive()` throwing. (The
+        // `URLSessionWebSocketTask.messages` AsyncSequence is not available on
+        // every SDK/toolchain, so `receive()` is the portable form.)
+        while true {
+            let message: URLSessionWebSocketTask.Message
+            do {
+                message = try await task.receive()
+            } catch {
+                break
+            }
             switch message {
             case .string(let text):
                 // Try to decode JSON-RPC envelope.
                 if let data = text.data(using: .utf8) {
                     do {
                         let envelope = try JSONDecoder().decode(JSONRPCEnvelope.self, from: data)
-                        onMessage(WireMessage(envelope))
+                        onMessage(WireMessage(envelope: envelope))
                     } catch {
                         onError(error)
                     }
                 }
             case .data(let data):
                 // Binary payload (e.g. image attach).
-                onMessage(BinaryPayload(data))
-            case .ping, .pong:
-                // Ignore auto-pings/pongs.
-                break
+                onMessage(BinaryPayload(data: data))
             @unknown default:
                 break
             }
@@ -76,7 +85,13 @@ public class HermesCoreWebSocket {
 }
 
 /// Types for wire envelope and payload.
-private enum JSONRPCEnvelope: Codable {
+///
+/// These are `internal` (not `private`) because the public `WireMessage`
+/// exposes an `envelope` property of this type. `JSONRPCEnvelope` is only ever
+/// *decoded* (the transport reads frames, never re-encodes them), so it
+/// conforms to `Decodable` alone — conforming to `Encodable` is impossible for
+/// its `Any`-carrying associated values and was the original build break.
+enum JSONRPCEnvelope: Decodable {
     case response(response: JSONRPCResponse)
     case notification(notification: JSONRPCNotification)
 
@@ -87,7 +102,14 @@ private enum JSONRPCEnvelope: Codable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let rpcVersion = try container.decode(String.self, forKey: .jsonrpc)
-        guard rpcVersion == "2.0" else { throw DecodingError.dataCorruptedError(in: container, debugDescription: "Unsupported JSON-RPC version") }
+        guard rpcVersion == "2.0" else {
+            throw DecodingError.dataCorrupted(
+                DecodingError.Context(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "Unsupported JSON-RPC version"
+                )
+            )
+        }
 
         if let method = try container.decodeIfPresent(String.self, forKey: .method) {
             let params = try container.decodeIfPresent([String: AnyCodable].self, forKey: .params) ?? [:]
@@ -101,18 +123,18 @@ private enum JSONRPCEnvelope: Codable {
     }
 }
 
-private struct JSONRPCNotification: Codable {
+struct JSONRPCNotification: Decodable {
     let name: String
     let payload: [String: AnyCodable]
 }
 
-private struct JSONRPCResponse {
+struct JSONRPCResponse {
     let id: String?
     let result: Any
     let error: JSONRPCError?
 }
 
-private struct JSONRPCError: Codable {
+struct JSONRPCError: Decodable {
     let code: Int
     let message: String
     let data: AnyCodable?
@@ -125,7 +147,7 @@ private struct JSONRPCError: Codable {
 /// order would encode `true` as `1`. The `[[Any]]` flatten branch is
 /// intentionally **removed**: it destroyed nested array structure
 /// (`[[1,2],[3,4]]` became `[1,2,3,4]`).
-private struct AnyCodable: Codable {
+struct AnyCodable: Codable {
     let value: Any
 
     init(_ value: Any) {
@@ -147,7 +169,14 @@ private struct AnyCodable: Codable {
         } else if let str = self.value as? String {
             try container.encode(str)
         } else if let num = self.value as? NSNumber {
-            try container.encode(num)
+            // NSNumber is not itself Encodable, and Swift Int64/Double bridge
+            // to it. Encode via the concrete numeric type. `Bool` is handled
+            // above, so a float check is enough to disambiguate.
+            if CFNumberIsFloatType(num) {
+                try container.encode(num.doubleValue)
+            } else {
+                try container.encode(num.int64Value)
+            }
         } else if let data = self.value as? Data {
             try container.encode(data)
         } else if let arr = self.value as? [Any] {
@@ -155,13 +184,13 @@ private struct AnyCodable: Codable {
         } else if let dict = self.value as? [String: Any] {
             try container.encode(dict.mapValues { AnyCodable($0) })
         } else {
-            throw EncodingError.invalidValue(self.value, EncodingError.Context(codingPath: encoder.codingPath, description: "Unsupported type for AnyCodable"))
+            throw EncodingError.invalidValue(self.value, EncodingError.Context(codingPath: encoder.codingPath, debugDescription: "Unsupported type for AnyCodable"))
         }
     }
 }
 
 /// An intermediate, losslessly-decodable JSON value.
-private struct AnyJSON: Codable {
+private struct AnyJSON: Decodable {
     let object: Any
 
     init(from decoder: Decoder) throws {

@@ -6,6 +6,10 @@ import GeneratedModels
 ///
 /// Run with `swift test` (see `todo.md` for the full
 /// macOS/Linux test-environment setup).
+///
+/// `@MainActor` because `GatewayClient` (and every type it drives) is
+/// main-actor isolated, so its construction and teardown must happen there.
+@MainActor
 final class HermesMobileTests: XCTestCase {
 
     // MARK: - JSONID correlation key (Y9)

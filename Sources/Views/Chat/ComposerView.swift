@@ -15,7 +15,7 @@ struct ComposerView: View {
             TextField("Message Hermes…", text: $text, axis: .vertical)
                 .lineLimit(1...6)
             Button {
-                await send()
+                Task { await send() }
             } label: {
                 Image(systemName: "arrow.up.circle.fill")
             }
@@ -26,7 +26,7 @@ struct ComposerView: View {
 
     private func send() async {
         let prompt = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !prompt.isEmpty else { return }
+        guard !prompt.isEmpty, let client else { return }
         sending = true
         defer { sending = false }
         // TODO: bind to the active session id (session.create / session.resume).
@@ -35,8 +35,7 @@ struct ComposerView: View {
             _ = try await client.submitPrompt(sessionID: sessionID, text: prompt)
             text = ""
         } catch {
-            // Surface the failure to the user (e.g. an alert).
-            text = ""
+            // Keep the text so the user can retry; surface the failure (e.g. an alert).
         }
     }
 }

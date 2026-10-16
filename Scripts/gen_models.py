@@ -20,7 +20,7 @@ import json, re, sys
 from pathlib import Path
 
 CONTRACT = str(Path(__file__).resolve().parent.parent / "gateway-contract.openrpc.json")
-OUT_DIR  = Path("/opt/data/profiles/coder/cache/scratch/HermesMobile/Sources/Generated")
+OUT_DIR  = Path(__file__).resolve().parent.parent / "Sources" / "Generated"
 
 SWIFT_KEYWORDS = {
     "associatedtype","class","deinit","enum","extension","fileprivate","func","import",
@@ -255,7 +255,16 @@ class Generator:
         if dflt is None:
             return None
         ty = self.swift_type(pschema, None).removesuffix("?")
-        if ty == "JSONValue" or pschema.get("type") == "object" or ("$ref" in pschema and ref_name(pschema["$ref"]) in self.enum_names):
+        # A `$ref` to an open-enum struct: the default must be constructed via
+        # `rawValue:` — the enum is a struct, not a Swift enum, so it has no
+        # `.string(_:)` case. Emitting `.string(...)` here produced code that
+        # did not compile against the matching `OpenEnums.swift` struct.
+        if "$ref" in pschema and ref_name(pschema["$ref"]) in self.enum_names:
+            if isinstance(dflt, str):
+                lit = dflt.replace("\\", "\\\\").replace('"', '\\"')
+                return f'{ref_name(pschema["$ref"])}(rawValue: "{lit}")'
+            return None
+        if ty == "JSONValue" or pschema.get("type") == "object":
             # JSON rules
             if isinstance(dflt, str):
                 return ".string(\"" + dflt.replace("\\", "\\\\").replace('"', '\\"') + "\")"

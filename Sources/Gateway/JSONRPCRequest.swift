@@ -1,4 +1,5 @@
 import Foundation
+import GeneratedModels
 
 /// JSON-RPC 2.0 request envelope used by the `tui_gateway` WebSocket API.
 ///

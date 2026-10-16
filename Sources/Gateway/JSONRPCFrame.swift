@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import GeneratedModels
 
 /// One JSON-RPC 2.0 frame on the wire. A frame is one of:
 /// - a **response** (`id` + `result` or `error`),
@@ -36,14 +37,16 @@ public struct JSONRPCFrame: Codable, Sendable {
             }
         }
 
-        /// A normalised correlation key for the `pending` dictionary.
+        /// A correlation key for the `pending` dictionary.
         ///
-        /// The JSON-RPC spec permits either a string or an integer id, and a
-        /// server may echo a string id back for a request the client sent with
-        /// an integer id. Keying `pending` by the raw `JSONID` would then fail
-        /// to correlate and the request would hang until its timeout (Y9).
-        /// This property renders both cases to a canonical string so that a
-        /// request correlates regardless of which form the server echoes.
+        /// The key is **type-tagged** (`n:` for a JSON number, `s:` for a JSON
+        /// string), so `42` and `"42"` map to different keys. This is
+        /// deliberate and matches JSON-RPC 2.0, which requires the server to
+        /// echo the *same* id value it received: a number reply only
+        /// correlates with a number request. (Earlier revisions of this
+        /// comment claimed both forms normalised to one key; they do not, and
+        /// the `HermesMobileTests.testJSONIDKeyIsStable` case pins the tagged
+        /// behaviour. See `fixes.md` Y9.)
         public var key: String {
             switch self {
             case .number(let i): return "n:\(i)"

@@ -612,11 +612,176 @@ git rm -r --cached .build .agentbridge .idea
 printf '.build/\n.agentbridge/\n.idea/\n.DS_Store\n' >> .gitignore
 ```
 
-Also: `openrpc.json` and `gateway-contract.openrpc.json` are byte-identical (both 1,014,478 bytes). One is redundant — confirm which is authoritative and remove the duplicate, or make one a symlink.
+Also: `openrpc.json` and `gateway-contract.openrpc.json` were byte-identical. **Resolved since Round 1:** the duplicate root `openrpc.json` is gone (only `gateway-contract.openrpc.json` remains), and `.build/`, `.agentbridge/`, `.idea/`, `.DS_Store` are ignored by `.gitignore`.
+
+---
+
+# Round 2 review — 2026-10-16
+
+**Review date:** 2026-10-16
+**Commit reviewed:** working tree on `master` (post-`968c84d`), after repairing the build.
+**Platform:** Apple Swift 6.4 toolchain, macOS 27 SDK, `swift-tools-version:5.10`, iOS 17 / macOS 14.
+
+Round 1 (above) reviewed commit `96a23f0` and concluded every finding was fixed.
+That conclusion was **not verifiable**: the tree did not compile, so the compiler
+never type-checked most of the code Round 1 marked ✅. Round 2 records (a) the
+build-breakers that were still present and are now fixed, and (b) the findings
+that remain open.
+
+## Verification performed this round
+
+| Check | Command | Result |
+|---|---|---|
+| Debug build, all targets | `swift build` | ✅ pass, **0 warnings** |
+| Build including tests | `swift build --build-tests` | ✅ pass |
+| Unit tests | `swift test` | ✅ 6/6 pass |
+| Xcode, iOS Simulator | `xcodebuild -scheme HermesMobile -destination 'generic/platform=iOS Simulator' build` | ✅ `BUILD SUCCEEDED` |
+| Xcode, all targets | `xcodebuild -scheme HermesMobile-Package -destination 'generic/platform=iOS Simulator' build` | ✅ `BUILD SUCCEEDED` |
+| Xcode, macOS | `xcodebuild -scheme HermesMobile -destination 'generic/platform=macOS' build` | ✅ `BUILD SUCCEEDED` |
+
+> Simulator **runtimes are not installed** on the review machine, so naming a
+> device (`name=iPhone 15`) fails; the generic iOS Simulator destination is used.
+> There is no `.xcodeproj` — the package is built directly by `xcodebuild`.
+
+## 🔴 Build-breakers fixed this round (N-series)
+
+**N1. `GatewayClient.swift` had 11 syntactically corrupted log statements.**
+Every `HermesLog(...)` whose message contained a colon plus text, and every one
+carrying OSLog `\(x, privacy: .public)` interpolation, was malformed:
+
+```swift
+HermesLog("error: "refusing non-wss WebSocket URL"")
+HermesLog("notice: "state → \(newState.rawValue, privacy: .public")")
+```
+
+The stray quotes make the literals invalid, and `privacy:` is OSLog-only
+(invalid inside a plain `String`). The file did not parse. Rewritten as
+well-formed literals with `privacy:` removed.
+
+**N2. `Sources/Gateway/*.swift` used `JSONValue` without importing it.**
+`JSONRPCError.swift`, `JSONRPCFrame.swift`, `JSONRPCRequest.swift` each needed
+`import GeneratedModels`; without it the `HermesMobile` target did not compile.
+
+**N3. `HermesMobile` did not depend on `HermesLogger`.** `Package.swift` listed
+only `GeneratedModels`, and `GatewayClient.swift` used `HermesLogger(...)`
+without importing it. Added the dependency and the import.
+
+**N4. `GeneratedModels` did not compile.** `Models.swift` emitted `.string("…")`
+defaults for `$ref`s to open-enum structs (`BrowserAction`, `CronAction`,
+`SkillsAction`, `BatteryCategory`, `VoiceRecordAction`, `VoiceToggleAction`,
+`LocaleSurface`, `PluginsAction`), which are `RawRepresentable` structs with no
+`.string` member. Fixed in `Scripts/gen_models.py::_default_literal` (emits
+`EnumName(rawValue: "…")`), regenerated, and verified drift-free against a
+backup (8 lines changed, nothing else).
+
+**N5. `HermesCoreWebSocket` did not compile.** It referenced the app-target
+`WebSocketTicket`; declared `AnyJSON`/`JSONRPCEnvelope` `Codable` (impossible —
+they carry `Any` with no `encode(to:)`); exposed private types through the
+public `WireMessage.envelope`; and used `URLSessionWebSocketTask.messages`, which
+does not exist on this SDK/toolchain. Now: `connect(session:wsUrl:…)` takes a
+`String`, the envelope helpers are `internal` and `Decodable`, and the read loop
+uses `receive()`.
+
+**N6. `GatewayClient.swift` used the `++` operator** (removed in Swift 3):
+`++socketGeneration`, `++nextId`, `++replayGeneration`. Replaced with `x += 1`.
+
+**N7. UI did not compile.** `ChatView`: `if let result {` bound an undeclared
+name. `ComposerView`: `await` inside a synchronous `Button` action, and
+`client.submitPrompt` on an optional `client`. `GatewayClient`:
+`if let epoch = result.epoch` where the generated `epoch` is a non-optional
+`String`.
+
+**N8. `@Sendable` closures mutated main-actor state.** The `HandlerToken`
+closures that removed `eventHandlers[eventType]` / `wildcardHandlers` touched
+`@MainActor` state from a sendable closure; they now hop via
+`Task { @MainActor in … }`. The same pattern was applied to the send-completion
+error handler that mutates `pending`.
+
+**N9. Minor.** `eventHandlers[eventType] ?? []` → `?? [:]` (a dictionary literal).
+
+## 🟠/🟡 Open findings (F-series) — compile, not yet fixed
+
+**F1 (AMBER) — Auth-close path leaks.** `urlSession(_:webSocketTask:didCloseWith:)`
+for close codes 4401/4403 calls only `setState(.error)`. It does not cancel the
+socket/session, reject pending calls, or stop the heartbeat. In-flight requests
+hang to their timeout (up to 120s) and the `URLSession`/task leak. Contrast
+`dropSocket`, which tears down fully.
+
+**F2 (AMBER) — `dropSocket` fires `.closed` twice.** When the socket was stably
+open it calls `onStateChange?(.closed)` and then `setState(.closed)`, which fires
+the same callback again. The "stable open" signal intended for the caller's
+backoff reset (A5/A7) is also indistinguishable from a plain close, so it cannot
+actually be acted on.
+
+**F3 (AMBER) — `TranscriptStore` is dead code.** Nothing registers a
+`gateway.on`/`onAny` handler to feed `apply(notification:)`; `ServerNotification`
+is never constructed; the store is injected into the environment but never
+updated from live events. Additionally `appendToolCall` looks a message up by
+`session_id` (`$0.id == sessionId`) though messages are keyed by `message_id`, so
+tool calls never attach; `advanceWatermark` casts `payload["seq"] as? Int`.
+
+**F4 (AMBER) — Auth is a placeholder that puts the URL in `Authorization`.**
+`GatewayConnection.connect(to:with:)` sets
+`client.ticketProvider = { ticket.wsUrl.isEmpty ? nil : ticket.wsUrl }`, and
+`GatewayClient` writes the provider's result into the `Authorization` header — so
+the header receives the **`wss://` URL**, not a token. `WebSocketTicket` carries
+only `wsUrl`; there is no ticket token anywhere. `connect(to:with:)` also takes
+both `url` and the ticket's `wsUrl`, which are redundant. R6's "attach the
+ticket" is therefore only nominally satisfied.
+
+**F5 (YELLOW) — Cold-start replay still skipped (A4).** `fetchReplay()` returns
+early when `lastSeenSeq` is empty, so the first connection of a fresh launch
+never installs a hold nor requests replay; events emitted between session create
+and socket open are lost with no epoch/truncation signal.
+
+**F6 (YELLOW) — R6 TLS hardening absent.** `wss://` is enforced, but there is no
+`URLSessionDelegate` challenge handler to reject a non-`.serverTrust` challenge
+as R6 proposed.
+
+**F7 (YELLOW) — Dead logging code.** `GatewayClient` declares
+`private static let logger = HermesLogger(...)` and never uses it; all logging
+goes through the free `HermesLog`, which `print`s unconditionally (no level, no
+OSLog routing, ships in release). Either route `HermesLog` through `HermesLogger`
+or delete the unused `logger`.
+
+**F8 (YELLOW) — Dead parameter.** `flushReplayHold(sid:generation:)` takes
+`generation gen` and never reads it (the comment says this is intentional).
+
+**F9 (YELLOW) — `HermesCoreWebSocket` is unused and duplicative.** The app drives
+`URLSessionWebSocketTask` directly in `GatewayClient`; nothing depends on the
+`HermesCoreWebSocket` target, and its instance `init()` is pointless (the API is
+static). Decide whether to adopt it or drop it.
+
+**F10 (YELLOW) — `Scripts/gen_client.py` is stale.** It emits a non-compiling
+`HermesGatewayClient.swift` (duplicate `HermesCoreWebSocket`, `fatalError` on
+connect). Its output now goes to `Scripts/generated/` (git-ignored) and it prints
+a deprecation warning; recommend deleting it and `Tools/generate_swift_models.py`.
+
+**F11 (YELLOW) — Doc drift, corrected this round.** The `GatewayClient` class
+comment said "`gateway.ping` heartbeat" (the method is `ping`), and the
+`JSONID.key` comment claimed the two id forms normalise together (they do not).
+
+## Corrections to Round 1's status claims
+
+- **Y9 — not fixed (by design).** The implementation keys `pending` with
+  **type-tagged** strings (`n:42` vs `s:42`), which do not normalise; the test
+  `testJSONIDKeyIsStable` asserts this distinctness. JSON-RPC 2.0 requires the
+  server to echo the same id value, so type-tagged keys are defensible, but the
+  Round-1 fix description ("try both forms on response") was never implemented
+  and the doc comment contradicted the code. The comment is now corrected.
+- **R6 — partially fixed.** `wss://` enforcement ✅ and `ticketProvider` is now
+  called ✅, but the header value is the URL (F4) and TLS challenge handling is
+  absent (F6).
+- **A4 — partially fixed.** The mid-flight replay hold exists (Y3/Y4 addressed),
+  but cold-start loss (F5) remains.
+- **A5/A7 — not fixed.** `ReconnectBackoff` remains caller-driven and the
+  "stable open" signal is not usable (F2).
 
 ---
 
 ## Summary
+
+### Round 1 (commit `96a23f0`) — original findings
 
 | Severity | Count | IDs |
 |:--------:|:-----:|:-----|
@@ -625,8 +790,21 @@ Also: `openrpc.json` and `gateway-contract.openrpc.json` are byte-identical (bot
 | 🟡 YELLOW | 11 | Y1–Y11 |
 | 🟢 GREEN | 8 | verified-correct |
 
-**Blocking sequence:** R1 must be fixed first — until `swift build` succeeds, none of R5, Y5, Y6, Y10 or Y11 are verifiable, because the compiler never reaches those files. After R1, expect the compiler to surface R5 and Y11 directly.
+### Round 2 (2026-10-16) — current state
 
-**Highest-value non-build fixes:** A2 (receive loop never runs — client cannot receive at all), A1 (tautological guard allows stale sockets to clobber a healthy connection), A3 (handler cancellation silently no-ops), A4 (cold-start event loss breaks the lossless-replay guarantee the header advertises).
+| Severity | Count | IDs | Status |
+|:--------:|:-----:|:-----|:------:|
+| 🔴 RED (build-breakers) | 9 | N1–N9 | ✅ fixed — build, tests, Xcode all pass |
+| 🟠 AMBER (open) | 4 | F1–F4 | ⬜ open |
+| 🟡 YELLOW (open) | 7 | F5–F11 | ⬜ open |
+| 🟢 GREEN (re-verified) | — | build + 6 tests + 3 Xcode schemes | ✅ |
 
-**Security posture:** R6 (no `wss` enforcement, `ticketProvider` never called) and R7 (conversation content written to the unified log on decode failure) are the two to address first. Neither is currently exploitable in production because R1/R4 mean the code cannot run — but both must be fixed before it can.
+**Bottom line:** the package now builds and tests cleanly on macOS and iOS
+Simulator (verified this round). The Round-1 claim that everything was fixed was
+premature — nine build-breakers (N1–N9) were still present and required repair.
+Of the original findings, R6 and A4 are only partially resolved and Y9 is
+unresolved-by-decision. The highest-value open item is F4 (auth is a placeholder
+that writes the WebSocket URL into the `Authorization` header), followed by F1
+(auth-close resource leak) and F3 (`TranscriptStore` is never wired to the
+transport, so the UI shows nothing).
+

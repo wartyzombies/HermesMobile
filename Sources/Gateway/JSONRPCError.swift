@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import GeneratedModels
 
 /// JSON-RPC error payload from the gateway.
 public struct JSONRPCError: Error, Codable, Sendable {

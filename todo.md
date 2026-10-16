@@ -20,14 +20,17 @@ Desktop three-party architecture (Shell / Renderer / Backend) over the
 
 ## Current status
 
-- ✅ **Package structure** — four SwiftPM targets, no overlapping sources
+- ✅ **Package structure** — five SwiftPM targets, no overlapping sources
+- ✅ **Build** — `swift build` / `swift build --build-tests` pass with zero warnings (verified 2026-10-16)
+- ✅ **Tests** — `swift test` 6/6 pass
+- ✅ **Xcode build** — iOS Simulator and macOS package schemes `BUILD SUCCEEDED`
 - ✅ **Gateway transport** — `GatewayClient`: JSON-RPC correlation, timeouts, heartbeat, reconnect-replay
 - ✅ **Typed API** — `HermesClient`: one method per `tui_gateway` RPC
 - ✅ **Generated models** — full OpenRPC coverage (`Sources/Generated/`)
-- ✅ **WebSocket transport** — `HermesCoreWebSocket` (`URLSessionWebSocketTask`)
-- ✅ **Review fixes** — all 🔴/🟠/🟡 findings from `fixes.md` applied
-- 🟡 **UI** — placeholder SwiftUI views wired to a working `HermesClient`
-- 🟡 **Auth** — ticket plumbing in place; OAuth (PKCE) / basic-auth managers not yet implemented
+- ⚠️ **WebSocket transport** — `HermesCoreWebSocket` compiles but is **unused**; `GatewayClient` drives `URLSessionWebSocketTask` directly
+- ⚠️ **Review** — Round 1 findings addressed; Round 2 (`fixes.md`) fixed 9 build-breakers (N1–N9) and left 11 open items (F1–F11)
+- 🟡 **UI** — placeholder SwiftUI views wired to a working `HermesClient`; `TranscriptStore` is **not yet subscribed** to the transport (F3)
+- 🟡 **Auth** — ticket plumbing is a placeholder; OAuth (PKCE) / basic-auth managers not yet implemented (F4), and the `Authorization` header currently receives the ws URL
 
 ## Milestones
 
@@ -42,22 +45,26 @@ Desktop three-party architecture (Shell / Renderer / Backend) over the
 
 ### M2 — Typed API + review fixes ✅
 - [x] `HermesClient` typed facade (session, prompt, approval, model, config, slash)
-- [x] Apply all `fixes.md` findings (8 🔴, 10 🟠, 11 🟡, 8 🟢)
+- [x] Round 1 fixes applied (see `fixes.md`)
+- [x] Round 2 build repair — N1–N9 (`fixes.md`); package builds and tests cleanly
 - [x] Unit tests for correlation key, `JSONValue` round-trip, backoff, frame decode
+- [ ] Round 2 open items F1–F11 (`fixes.md`)
 
 ### M3 — Auth (in progress)
 - [ ] OAuth 2.0 + PKCE via `ASWebAuthenticationSession` (Nous Portal)
 - [ ] Basic auth for trusted LAN/VPN gateways
 - [ ] Keychain-backed credential storage
-- [ ] Ticket minting per dial
+- [ ] Ticket minting per dial (F4 — `WebSocketTicket` currently carries only `wsUrl`; the `Authorization` header gets the URL)
+- [ ] TLS challenge handler rejecting non-`.serverTrust` challenges (F6)
 
 ### M4 — UI (in progress)
+- [ ] Subscribe `TranscriptStore` to `GatewayClient` events (F3 — currently unwired)
 - [ ] Session list sidebar (from `session.list`)
 - [ ] Transcript rendering (from `message.delta` / `message.complete`)
 - [ ] Tool-call cards (from `tool.start` / `tool.complete`)
-- [ ] Approval dialogs (from `approval.received` → `approval.respond`)
+- [ ] Approval dialogs (from `approval.received` → `approval.respond`); register a `ServerRequestHandler` (F3)
 - [ ] Model picker (from `model.options`)
-- [ ] Composer send → `prompt.submit`
+- [ ] Composer send → `prompt.submit` (bind the active session id; currently `""`)
 
 ### M5 — Polish
 - [ ] Dark mode / dynamic color
@@ -80,8 +87,10 @@ swift build -c release     # release
 swift test                 # unit tests
 swift test --filter HermesMobileTests
 
-# iOS app UI:
-xcodebuild -scheme HermesMobile -destination 'platform=iOS Simulator,name=iPhone 15' build
+# iOS Simulator (use a generic destination when no simulator runtime is installed):
+xcodebuild -scheme HermesMobile -destination 'generic/platform=iOS Simulator' build
+# macOS:
+xcodebuild -scheme HermesMobile -destination 'generic/platform=macOS' build
 ```
 
 ### Linux (portable modules only)
@@ -105,9 +114,12 @@ swift test --filter HermesMobileTests
 ### Regenerating models
 
 ```bash
-python3 Scripts/gen_models.py     # reads gateway-contract.openrpc.json
-python3 Scripts/gen_client.py     # optional typed client stubs
+python3 Scripts/gen_models.py     # reads gateway-contract.openrpc.json → Sources/Generated
 ```
+
+`Scripts/gen_client.py` is deprecated and must not be run (it emits a
+non-compiling `HermesGatewayClient.swift`). `Sources/HermesClient.swift` is the
+real typed facade.
 
 ## Code standards
 
@@ -120,9 +132,23 @@ python3 Scripts/gen_client.py     # optional typed client stubs
 ## Known limitations
 
 - 🟡 Auth managers (OAuth PKCE, basic auth) are not yet implemented — the
-  ticket provider hook exists but needs a backend to mint tickets.
-- 🟡 SwiftUI views are placeholders; data path is wired but not fully rendered.
-- 🟡 Reconnect loop is caller-driven (`ReconnectBackoff` is provided, not auto-driven).
+  ticket provider hook exists but `GatewayConnection` puts `ticket.wsUrl` into
+  the `Authorization` header (F4), and there is no ticket token type.
+- 🟡 `TranscriptStore` is not subscribed to `GatewayClient` events, so the
+  transcript never updates from the server (F3).
+- 🟡 The 4401/4403 auth-close path leaks the socket/session and leaves pending
+  calls to time out (F1).
+- 🟡 Cold-start replay is skipped — `fetchReplay` returns early on an empty
+  watermark (F5).
+- 🟡 `ReconnectBackoff` is provided but caller-driven; the "stable open" signal
+  is emitted twice and is not currently actionable (F2).
+- 🟡 `HermesCoreWebSocket` compiles but is unused and duplicates the app
+  transport (F9).
+- 🟡 SwiftUI views are placeholders; the data path exists but is not fully
+  rendered.
+- 🟡 `JSONID.key` is type-tagged (`n:`/`s:`), so a server that echoes a string
+  id for an integer request will not correlate — deliberate per JSON-RPC 2.0,
+  documented at `fixes.md` Y9.
 
 ## License
 

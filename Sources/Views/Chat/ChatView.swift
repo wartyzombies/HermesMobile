@@ -48,7 +48,7 @@ private struct ToolCallRow: View {
         HStack(spacing: 4) {
             Image(systemName: "wrench.and.screwdriver")
             Text(tool.name).font(.caption)
-            if let result { Text("✓").foregroundStyle(.green) }
+            if tool.result != nil { Text("✓").foregroundStyle(.green) }
         }
         .font(.caption)
         .foregroundStyle(.secondary)
