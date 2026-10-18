@@ -20,11 +20,21 @@ struct ChatView: View {
     @State private var modelOptionsLoaded = false
 
     var body: some View {
+        let sessionID = gateway?.activeSession
+
         Group {
-            if let sessionID = gateway?.activeSession {
+            if let sessionID {
                 main(sessionID: sessionID)
             } else {
                 emptyState
+            }
+        }
+        .sheet(item: Binding(
+            get: { sessionID },
+            set: { _ in }
+        )) { sessionID in
+            NavigationStack {
+                CommandsView(sessionID: sessionID)
             }
         }
         // (Re)load history whenever the active session changes.
@@ -77,6 +87,11 @@ struct ChatView: View {
                 Button("Model") {
                     modelOptionsLoaded = false
                     showingModelPicker = true
+                }
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Commands") {
+                    showingCommands = true
                 }
             }
         }
