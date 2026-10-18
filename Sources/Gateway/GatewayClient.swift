@@ -8,11 +8,7 @@
 
 import Foundation
 import GeneratedModels
-
-private func HermesLog(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
-    let fileName = (file as NSString).lastPathComponent
-    print("[\(fileName):\(function):\(line)] \(message)")
-}
+import HermesLogger
 
 // MARK: - Connection state
 
@@ -90,8 +86,6 @@ public final class HandlerToken: Sendable {
 @MainActor
 public final class GatewayClient: NSObject {
     private static let logger = HermesLogger(subsystem: "com.nousresearch.hermes.mobile", category: "GatewayClient")
-
-    // Configuration
     /// Per-request timeout (default 120s).
     public var requestTimeoutMs: Int = 120_000
     /// Heartbeat interval (default 15s).
@@ -170,7 +164,7 @@ public final class GatewayClient: NSObject {
         let allowedSchemes = ["wss"]
         #endif
         guard let scheme = wsUrl.scheme?.lowercased(), allowedSchemes.contains(scheme) else {
-            HermesLog("error: "refusing non-wss WebSocket URL"")
+            Self.logger.error("error: refusing non-wss WebSocket URL")
             setState(.error)
             return
         }
@@ -218,7 +212,7 @@ public final class GatewayClient: NSObject {
             try? await Task.sleep(nanoseconds: timeout)
             guard let self else { return }
             if gen == self.socketGeneration && self.state == .connecting {
-                HermesLog("error: "connect timeout \(self.connectTimeoutMs")ms")
+                Self.logger.error("connect timeout \(self.connectTimeoutMs)ms")
                 task.cancel(with: .goingAway, reason: nil)
                 self.setState(.error)
             }
@@ -268,7 +262,7 @@ public final class GatewayClient: NSObject {
                     }
                 } catch {
                     if gen == self.socketGeneration {
-                        HermesLog("error: "receive error"")
+                        Self.logger.error("receive error")
                         self.dropSocket(reason: "receive error")
                     }
                     break
@@ -286,7 +280,7 @@ public final class GatewayClient: NSObject {
         guard let frame = try? JSONDecoder().decode(JSONRPCFrame.self, from: data) else {
             // Security (R7): never log frame payload bytes — a gateway event
             // frame carries conversation content. Log metadata only.
-            HermesLog("error: "unparseable frame: \(data.count") bytes")
+            Self.logger.error("unparseable frame: \(data.count) bytes")
             return
         }
 
@@ -358,7 +352,7 @@ public final class GatewayClient: NSObject {
             if handler.handle(request: req) { return }
         }
         // Unhandled: answer -32601 so the backend doesn't wait out its deadline.
-        HermesLog("notice: "unhandled server→client request: \(method, privacy: .public")")
+        Self.logger.notice("unhandled server→client request: \(method, privacy: .public)")
         fail(JSONRPCErrorCode.methodNotFound, "method not found: \(method)")
     }
 
@@ -473,7 +467,7 @@ public final class GatewayClient: NSObject {
         // Check deadline (any-inbound liveness).
         let elapsed = Date().timeIntervalSince(lastLivenessAt) * 1000
         if elapsed > Double(heartbeatDeadlineMs) {
-            HermesLog("error: "heartbeat deadline exceeded \(elapsed")ms — dropping socket")
+            Self.logger.error("heartbeat deadline exceeded \(elapsed)ms — dropping socket")
             dropSocket(reason: "heartbeat deadline")
             return
         }
@@ -486,7 +480,7 @@ public final class GatewayClient: NSObject {
             do {
                 let _: JSONValue = try await self.requestRaw("ping", params: .null, timeoutMs: self.heartbeatDeadlineMs)
             } catch {
-                HermesLog("error: "heartbeat ping failed"")
+                Self.logger.error("heartbeat ping failed")
                 self.dropSocket(reason: "heartbeat ping failed")
             }
         }
@@ -652,7 +646,7 @@ public final class GatewayClient: NSObject {
                 }
             }
         } catch {
-            HermesLog("notice: "replay fetch failed for \(sid, privacy: .public")")
+            Self.logger.notice("replay fetch failed for \(sid, privacy: .public)")
         }
 
         flushReplayHold(sid: sid, generation: gen)
@@ -676,7 +670,7 @@ public final class GatewayClient: NSObject {
     /// Drop the current socket and transition to `.closed`.
     /// - Parameter reason: a short, non-sensitive reason (logged).
     private func dropSocket(reason: String) {
-        HermesLog("notice: "dropSocket: \(reason, privacy: .public")")
+        Self.logger.notice("dropSocket: \(reason, privacy: .public)")
         let wasOpen = state == .open
         let opened = openedAt
         webSocketTask?.cancel(with: .goingAway, reason: nil)
@@ -700,7 +694,7 @@ public final class GatewayClient: NSObject {
     private func setState(_ newState: GatewayConnectionState) {
         guard state != newState else { return }
         state = newState
-        HermesLog("notice: "state → \(newState.rawValue, privacy: .public")")
+        Self.logger.notice("state → \(newState.rawValue, privacy: .public)")
         onStateChange?(newState)
     }
 
@@ -767,7 +761,7 @@ extension GatewayClient: URLSessionWebSocketDelegate {
         Task { @MainActor in
             // A1: identity check so a stale close cannot mark a newer socket .error.
             guard task === self.webSocketTask else { return }
-            HermesLog("notice: "WebSocket closed: code=\(closeCode.rawValue")")
+            Self.logger.notice("WebSocket closed: code=\(closeCode.rawValue)")
             // 4401 = WS ticket didn't authenticate; 4403 = request guard rejected.
             if closeCode.rawValue == 4401 || closeCode.rawValue == 4403 {
                 setState(.error)

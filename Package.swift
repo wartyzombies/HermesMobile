@@ -25,7 +25,7 @@ let package = Package(
         // to build a single file (fixes.md R1).
         .target(
             name: "HermesMobile",
-            dependencies: ["GeneratedModels"],
+            dependencies: ["GeneratedModels", "HermesLogger"],
             path: "Sources",
             exclude: ["HermesCoreWebSocket", "Generated"]
         ),

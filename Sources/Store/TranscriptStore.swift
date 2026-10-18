@@ -1,5 +1,4 @@
 import Foundation
-import HermesLogger
 import SwiftUI
 
 /// In-memory model of the chat transcript, driven by server notifications.

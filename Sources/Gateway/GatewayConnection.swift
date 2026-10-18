@@ -1,5 +1,4 @@
 import Foundation
-import HermesLogger
 import SwiftUI
 
 /// Manages a single WebSocket connection to a `hermes serve` gateway,
