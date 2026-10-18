@@ -84,19 +84,16 @@ final class GatewayConnection {
     private func approvalRequest(from dict: [String: JSONValue]) -> ApprovalRequest? {
         guard let requestId = dict["request_id"]?.stringValue else { return nil }
         let sessionId = dict["session_id"]?.stringValue ?? ""
-        let choices: [String]? = dict["choices"]?.arrayValue?.compactMap { $0.stringValue }
-        let approval = PendingApproval(
-            requestId: requestId,
-            command: dict["command"]?.stringValue,
-            description: dict["description"]?.stringValue,
-            patternKey: nil,
-            patternKeys: nil,
-            allowPermanent: dict["allow_permanent"]?.boolValue,
-            allowSession: dict["allow_session"]?.boolValue,
-            smartDenied: nil,
-            choices: choices,
-            toolName: dict["tool_name"]?.stringValue
-        )
+        // Decode into the generated Codable PendingApproval instead of
+        // hand-extracting each field from the JSONValue object.
+        let approval: PendingApproval?
+        if case .object(let obj) = dict,
+           let data = try? JSONEncoder().encode(obj),
+           let decoded = try? JSONDecoder().decode(PendingApproval.self, from: data) {
+            approval = decoded
+        } else {
+            approval = nil
+        }
         return ApprovalRequest(id: requestId, approval: approval, sessionId: sessionId)
     }
 }
@@ -142,6 +139,5 @@ final class ApprovalManager {
     /// The approval currently awaiting a decision, or `nil`.
     var pending: ApprovalRequest?
 
-    static let shared = ApprovalManager()
     private init() {}
 }
