@@ -150,13 +150,7 @@ public final class HermesAuthenticator {
     /// Probe `GET /api/status` to discover auth requirements.
     public func discover() async throws -> GatewayAuthInfo {
         let url = config.baseURL.appendingPathComponent("api/status")
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-
-        let (data, response) = try await urlSession.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw AuthError.invalidResponse("not HTTP")
-        }
+        let (data, httpResponse) = try await request(url)
 
         // If we get a 200, we can read auth_required + providers.
         // A 401 also tells us auth is required.
@@ -165,7 +159,7 @@ public final class HermesAuthenticator {
         }
 
         guard httpResponse.statusCode == 200 else {
-            throw AuthError.invalidResponse("status \(httpResponse.statusCode)")
+            throw AuthError.invalidResponse("status \\(httpResponse.statusCode)")
         }
 
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
@@ -193,18 +187,13 @@ public final class HermesAuthenticator {
     /// the cookie value as the access token.
     public func signInBasic(username: String, password: String) async throws -> GatewayCredentials {
         let url = config.baseURL.appendingPathComponent("auth/password-login")
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
         let body: [String: String] = ["username": username, "password": password]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-
-        let (_, response) = try await urlSession.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw AuthError.invalidResponse("not HTTP")
-        }
-
+        let (_, httpResponse) = try await request(
+            url,
+            method: "POST",
+            headers: ["Content-Type": "application/json"],
+            body: try? JSONSerialization.data(withJSONObject: body)
+        )
         guard httpResponse.statusCode == 200 else {
             throw AuthError.signInFailed("HTTP \(httpResponse.statusCode)")
         }
@@ -306,13 +295,7 @@ public final class HermesAuthenticator {
         //   <dashboard>/auth/callback?code=…&state=…
         // The dashboard server handles the token exchange server-side.
         // We need to hit this URL and capture the Set-Cookie header.
-        var request = URLRequest(url: callbackURL)
-        request.httpMethod = "GET"
-
-        let (_, response) = try await urlSession.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw AuthError.invalidResponse("not HTTP")
-        }
+        let (_, httpResponse) = try await request(callbackURL)
 
         guard httpResponse.statusCode == 200 || httpResponse.statusCode == 302 else {
             throw AuthError.signInFailed("HTTP \(httpResponse.statusCode)")
@@ -353,19 +336,16 @@ public final class HermesAuthenticator {
         }
 
         let url = config.baseURL.appendingPathComponent("api/ws/ticket")
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(creds.accessToken)", forHTTPHeaderField: "Authorization")
-
-        do {
-            let (data, response) = try await urlSession.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse,
-                  httpResponse.statusCode == 200 else {
-                return nil
-            }
-            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                return nil
-            }
+        guard let (data, httpResponse) = try? await request(
+            url,
+            method: "POST",
+            headers: ["Authorization": "Bearer \(creds.accessToken)"]
+        ), httpResponse.statusCode == 200 else {
+            return nil
+        }
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
             if let ticket = json["ticket"] as? String {
                 // Build the full WS URL from the ticket.
                 // The dashboard's WS endpoint is at /api/ws.
@@ -389,11 +369,7 @@ public final class HermesAuthenticator {
         guard let creds = credentials else { return }
         // Hit the logout endpoint to clear server-side session.
         let url = config.baseURL.appendingPathComponent("auth/logout")
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(creds.accessToken)", forHTTPHeaderField: "Authorization")
-
-        _ = try? await urlSession.data(for: request)
+        _ = try? await request(url, method: "POST", headers: ["Authorization": "Bearer \(creds.accessToken)"])
 
         // Delete from Keychain.
         let host = config.baseURL.host ?? config.baseURL.absoluteString
@@ -410,11 +386,11 @@ public final class HermesAuthenticator {
         }
 
         let url = config.baseURL.appendingPathComponent("api/auth/me")
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(creds.accessToken)", forHTTPHeaderField: "Authorization")
-
-        let (data, response) = try await urlSession.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+        let (data, httpResponse) = try await request(
+            url,
+            headers: ["Authorization": "Bearer \(creds.accessToken)"]
+        )
+        guard httpResponse.statusCode == 200 else {
             throw AuthError.invalidResponse("auth/me failed")
         }
 
@@ -431,6 +407,28 @@ public final class HermesAuthenticator {
     }
 
     // MARK: - Private helpers
+
+    /// Perform an authenticated HTTP request and return the response body +
+    /// HTTPURLResponse. Consolidates the URLRequest building, header setting,
+    /// and non-HTTP guard shared by all auth flows.
+    private func request(
+        _ url: URL,
+        method: String = "GET",
+        headers: [String: String] = [:],
+        body: Data? = nil
+    ) async throws -> (Data, HTTPURLResponse) {
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.httpBody = body
+        for (key, value) in headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        let (data, response) = try await urlSession.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw AuthError.invalidResponse("not HTTP")
+        }
+        return (data, httpResponse)
+    }
 
     private func store(_ creds: GatewayCredentials) throws {
         let host = config.baseURL.host ?? config.baseURL.absoluteString

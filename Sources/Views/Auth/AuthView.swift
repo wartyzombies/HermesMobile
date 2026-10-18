@@ -208,28 +208,8 @@ public struct AuthView: View {
 
         do {
             let authorizeURL = try auth.startNousOAuth()
-            let callbackScheme = config.baseURL.scheme ?? "http"
-
-            let session = ASWebAuthenticationSession(
-                url: authorizeURL,
-                callbackURLScheme: callbackScheme
-            ) { [self] callbackURL, error in
-                Task { @MainActor in
-                    if let error {
-                        if let asError = error as? ASWebAuthenticationSessionError,
-                           asError.code == .canceledLogin {
-                            isAuthenticating = false
-                            return
-                        }
-                        errorMessage = error.localizedDescription
-                        isAuthenticating = false
-                        return
-                    }
-                    guard let callbackURL else {
-                        errorMessage = "No callback URL received"
-                        isAuthenticating = false
-                        return
-                    }
+            presentOAuth(authorizeURL: authorizeURL) { callbackURL in
+                Task {
                     do {
                         let creds = try await auth.completeOAuth(callbackURL: callbackURL)
                         onAuthenticated(creds)
@@ -239,7 +219,6 @@ public struct AuthView: View {
                     isAuthenticating = false
                 }
             }
-            session.start()
         } catch {
             errorMessage = error.localizedDescription
             isAuthenticating = false
@@ -255,28 +234,8 @@ public struct AuthView: View {
 
         do {
             let authorizeURL = try await auth.startOIDCAuth()
-            let callbackScheme = config.baseURL.scheme ?? "http"
-
-            let session = ASWebAuthenticationSession(
-                url: authorizeURL,
-                callbackURLScheme: callbackScheme
-            ) { [self] callbackURL, error in
-                Task { @MainActor in
-                    if let error {
-                        if let asError = error as? ASWebAuthenticationSessionError,
-                           asError.code == .canceledLogin {
-                            isAuthenticating = false
-                            return
-                        }
-                        errorMessage = error.localizedDescription
-                        isAuthenticating = false
-                        return
-                    }
-                    guard let callbackURL else {
-                        errorMessage = "No callback URL received"
-                        isAuthenticating = false
-                        return
-                    }
+            presentOAuth(authorizeURL: authorizeURL) { callbackURL in
+                Task {
                     do {
                         let creds = try await auth.completeOAuth(callbackURL: callbackURL)
                         onAuthenticated(creds)
@@ -286,11 +245,44 @@ public struct AuthView: View {
                     isAuthenticating = false
                 }
             }
-            session.start()
         } catch {
             errorMessage = error.localizedDescription
             isAuthenticating = false
         }
+    }
+
+    // MARK: - OAuth session presentation
+
+    /// Present an `ASWebAuthenticationSession` for `authorizeURL` and hand the
+    /// callback URL to `onCallback` (run on `@MainActor`). Handles canceled
+    /// login and missing-callback errors inline so callers don't repeat them.
+    private func presentOAuth(authorizeURL: URL, onCallback: @escaping (URL) -> Void) {
+        let callbackScheme = config.baseURL.scheme ?? "http"
+
+        let session = ASWebAuthenticationSession(
+            url: authorizeURL,
+            callbackURLScheme: callbackScheme
+        ) { [self] callbackURL, error in
+            Task { @MainActor in
+                if let error {
+                    if let asError = error as? ASWebAuthenticationSessionError,
+                       asError.code == .canceledLogin {
+                        isAuthenticating = false
+                        return
+                    }
+                    errorMessage = error.localizedDescription
+                    isAuthenticating = false
+                    return
+                }
+                guard let callbackURL else {
+                    errorMessage = "No callback URL received"
+                    isAuthenticating = false
+                    return
+                }
+                onCallback(callbackURL)
+            }
+        }
+        session.start()
     }
 }
 #endif
