@@ -61,6 +61,7 @@ struct ChatView: View {
         }
         .task {
             if let sid = gateway?.activeSession { await loadHistory(sid) }
+            await loadModelOptions()
         }
     }
 
@@ -110,7 +111,6 @@ struct ChatView: View {
     private var modelPickerButtons: some View {
         if !modelOptionsLoaded {
             ProgressView("Loading models…")
-                .task { await loadModelOptions() }
         } else if modelOptions.isEmpty {
             Text("No models available")
         } else {
@@ -172,7 +172,7 @@ struct ChatView: View {
             }
             store?.replace(messages: messages)
         } catch {
-            // History load failed; the transcript stays empty until events arrive.
+            print("loadHistory failed: \(error.localizedDescription)")
         }
     }
 
@@ -187,6 +187,7 @@ struct ChatView: View {
             modelOptions = dict
             modelOptionsLoaded = true
         } catch {
+            print("modelOptions failed: \(error.localizedDescription)")
             modelOptions = [:]
             modelOptionsLoaded = true
         }
@@ -214,7 +215,7 @@ struct ChatView: View {
                     choice: ApprovalChoice(rawValue: choice)
                 )
             } catch {
-                // Swallow; the alert dismisses regardless.
+                print("respondApproval failed: \(error.localizedDescription)")
             }
         }
     }

@@ -118,6 +118,11 @@ public final class GatewayClient: NSObject {
     /// In-flight requests, keyed by a normalised string form of the JSON-RPC id.
     private var pending: [String: PendingCall] = [:]
 
+    /// Whether a heartbeat ping is currently in flight; guards against
+    // launching concurrent pings on a slow gateway (each up to
+    // `heartbeatDeadlineMs`, wasting socket capacity).
+    private var pingInFlight = false
+
     // Heartbeat
     private var heartbeatTask: Task<Void, Never>?
     private var lastLivenessAt: Date = .distantPast
@@ -462,7 +467,7 @@ public final class GatewayClient: NSObject {
     }
 
     private func sendHeartbeat() {
-        guard state == .open else { return }
+        guard state == .open, !pingInFlight else { return }
 
         // Check deadline (any-inbound liveness).
         let elapsed = Date().timeIntervalSince(lastLivenessAt) * 1000
@@ -473,6 +478,7 @@ public final class GatewayClient: NSObject {
         }
 
         heartbeatSequence += 1
+        pingInFlight = true
 
         // Send a lightweight ping using the JSON-RPC ping method.
         Task { [weak self] in
@@ -483,6 +489,7 @@ public final class GatewayClient: NSObject {
                 Self.logger.error("heartbeat ping failed")
                 self.dropSocket(reason: "heartbeat ping failed")
             }
+            self.pingInFlight = false
         }
     }
 

@@ -459,16 +459,22 @@ public final class HermesAuthenticator {
                 if trimmed.hasPrefix("max-age="), let seconds = Int(value), seconds > 0 {
                     return Date().addingTimeInterval(Double(seconds))
                 }
-                // Parse HTTP-date for Expires.
-                let formatter = DateFormatter()
-                formatter.locale = Locale(identifier: "en_US_POSIX")
-                formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
-                return formatter.date(from: value)
+                // Parse HTTP-date for Expires. Hoisted formatter to avoid
+                // re-initializing ICU/locale on every sign-in (hot path).
+                return cookieExpiryFormatter.date(from: value)
             }
         }
         // Default: access token TTL is 15 minutes (contract v1).
         return Date().addingTimeInterval(15 * 60)
     }
+
+    /// Reusable HTTP-date formatter shared across sign-in paths.
+    private static let cookieExpiryFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+        return formatter
+    }()
 }
 
 // MARK: - Auth user

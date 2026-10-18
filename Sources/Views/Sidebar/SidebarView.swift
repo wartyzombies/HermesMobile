@@ -40,9 +40,11 @@ struct SidebarView: View {
         }
         .listStyle(.sidebar)
         .task { await loadSessions() }
-        // Refresh the list whenever the (re)connection settles.
+        // Refresh the list when (re)connected, but only if we have no
+        // cached sessions yet — avoid redundant session.list calls on
+        // flapping reconnects.
         .onChange(of: gateway?.connectionState) { _, newState in
-            if newState == .connected { Task { await loadSessions() } }
+            if newState == .connected && sessions.isEmpty { Task { await loadSessions() } }
         }
     }
 
@@ -54,7 +56,7 @@ struct SidebarView: View {
             let result = try await client.listSessions()
             self.sessions = result.sessions
         } catch {
-            // Leave the list empty; a failed load must not block the UI.
+            print("loadSessions failed: \(error.localizedDescription)")
         }
     }
 
@@ -63,7 +65,7 @@ struct SidebarView: View {
         do {
             _ = try await client.resumeSession(sessionID: sessionID)
         } catch {
-            // Resume failures surface as an empty transcript for now.
+            print("resume failed: \(error.localizedDescription)")
         }
     }
 }
