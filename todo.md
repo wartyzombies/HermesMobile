@@ -45,19 +45,19 @@ Desktop three-party architecture (Shell / Renderer / Backend) over the
 - [x] Apply all `fixes.md` findings (8 🔴, 10 🟠, 11 🟡, 8 🟢)
 - [x] Unit tests for correlation key, `JSONValue` round-trip, backoff, frame decode
 
-### M3 — Auth (in progress)
-- [ ] OAuth 2.0 + PKCE via `ASWebAuthenticationSession` (Nous Portal)
-- [ ] Basic auth for trusted LAN/VPN gateways
-- [ ] Keychain-backed credential storage
-- [ ] Ticket minting per dial
+### M3 — Auth ✅
+- [x] OAuth 2.0 + PKCE via `ASWebAuthenticationSession` (Nous Portal)
+- [x] Basic auth for trusted LAN/VPN gateways
+- [x] Keychain-backed credential storage
+- [x] Ticket minting per dial
 
-### M4 — UI (in progress)
-- [ ] Session list sidebar (from `session.list`)
-- [ ] Transcript rendering (from `message.delta` / `message.complete`)
-- [ ] Tool-call cards (from `tool.start` / `tool.complete`)
-- [ ] Approval dialogs (from `approval.received` → `approval.respond`)
-- [ ] Model picker (from `model.options`)
-- [ ] Composer send → `prompt.submit`
+### M4 — UI ✅
+- [x] Session list sidebar (from `session.list`)
+- [x] Transcript rendering (from `message.delta` / `message.complete`)
+- [x] Tool-call cards (from `tool.start` / `tool.complete`)
+- [x] Approval dialogs (from `approval.received` → `approval.respond`)
+- [x] Model picker (from `model.options`)
+- [x] Composer send → `prompt.submit`
 
 ### M5 — Polish
 - [ ] Dark mode / dynamic color
