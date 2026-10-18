@@ -2,11 +2,14 @@ import SwiftUI
 
 /// The message composer: a growing text field and a Send button.
 ///
-/// Sends the prompt through `HermesClient.submitPrompt` and clears
-/// the field on success. The Send button is disabled while the text
-/// is empty or a send is in flight.
+/// Sends the prompt through `HermesClient.submitPrompt` for the active
+/// session and clears the field on success. The Send button is disabled while
+/// the text is empty or a send is in flight.
 struct ComposerView: View {
     @Environment(\.hermesClient) private var client
+
+    let sessionID: String
+
     @State private var text = ""
     @State private var sending = false
 
@@ -14,23 +17,26 @@ struct ComposerView: View {
         HStack {
             TextField("Message Hermes…", text: $text, axis: .vertical)
                 .lineLimit(1...6)
+                .textFieldStyle(.roundedBorder)
             Button {
                 await send()
             } label: {
                 Image(systemName: "arrow.up.circle.fill")
+                    .font(.title2)
             }
-            .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || sending)
+            .disabled(
+                text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                || sending
+            )
         }
         .padding()
     }
 
     private func send() async {
         let prompt = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !prompt.isEmpty else { return }
+        guard !prompt.isEmpty, let client else { return }
         sending = true
         defer { sending = false }
-        // TODO: bind to the active session id (session.create / session.resume).
-        let sessionID = ""
         do {
             _ = try await client.submitPrompt(sessionID: sessionID, text: prompt)
             text = ""
