@@ -91,7 +91,8 @@ struct ChatView: View {
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Commands") {
-                    showingCommands = true
+                    // CommandsView is presented via .sheet(item:) above,
+                    // keyed on gateway?.activeSession.
                 }
             }
         }

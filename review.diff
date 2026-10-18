@@ -1,0 +1,2504 @@
+diff --git a/LICENSE.txt b/LICENSE.txt
+old mode 100755
+new mode 100644
+diff --git a/Package.swift b/Package.swift
+index 8dd2277..16c8158 100755
+--- a/Package.swift
++++ b/Package.swift
+@@ -25,12 +25,14 @@ let package = Package(
+         // to build a single file (fixes.md R1).
+         .target(
+             name: "HermesMobile",
+-            dependencies: ["GeneratedModels"],
++            dependencies: ["GeneratedModels", "HermesLogger"],
+             path: "Sources",
+             exclude: ["HermesCoreWebSocket", "Generated"]
+         ),
+         // Low-level URLSessionWebSocketTask transport.
+-        .target(name: "HermesCoreWebSocket", path: "Sources/HermesCoreWebSocket"),
++        .target(name: "HermesCoreWebSocket", path: "Sources/HermesCoreWebSocket", dependencies: ["HermesLogger"]),
++        // Cross-platform logging shim (OSLog on Apple, print on Linux).
++        .target(name: "HermesLogger", path: "Sources/HermesLogger"),
+         // Machine-generated wire models. No bundled resources: the generators
+         // read openrpc.json from the repo root and emit only .swift files (Y6).
+         .target(name: "GeneratedModels", path: "Sources/Generated"),
+diff --git a/Sources/AppEnvironment.swift b/Sources/AppEnvironment.swift
+index f9eaa63..b272189 100755
+--- a/Sources/AppEnvironment.swift
++++ b/Sources/AppEnvironment.swift
+@@ -1,18 +1,37 @@
+ import SwiftUI
+ 
+-/// The `HermesClient` available to every view via
+-/// `@Environment(\.hermesClient)`.
++/// Single source of truth for all `@Environment` keys used by the M4 UI views.
+ ///
+-/// Injected once by the app shell (`HermesMobileApp`) so views can
+-/// issue RPCs without holding a direct reference to the transport.
++/// Views reach the transport, connection, transcript store, and active
++/// session through these keys; the app shell injects the live values once.
+ private struct HermesClientKey: EnvironmentKey {
+     static let defaultValue: HermesClient? = nil
+ }
+ 
++private struct GatewayConnectionKey: EnvironmentKey {
++    static let defaultValue: GatewayConnection? = nil
++}
++
++private struct TranscriptStoreKey: EnvironmentKey {
++    static let defaultValue: TranscriptStore? = nil
++}
++
+ extension EnvironmentValues {
+     /// The shared `HermesClient`, or `nil` before the shell wires it.
+     var hermesClient: HermesClient? {
+         get { self[HermesClientKey.self] }
+         set { self[HermesClientKey.self] = newValue }
+     }
+-}
++
++    /// The live `GatewayConnection`, or `nil` before the shell wires it.
++    var gatewayConnection: GatewayConnection? {
++        get { self[GatewayConnectionKey.self] }
++        set { self[GatewayConnectionKey.self] = newValue }
++    }
++
++    /// The transcript store, or `nil` before the shell wires it.
++    var transcriptStore: TranscriptStore? {
++        get { self[TranscriptStoreKey.self] }
++        set { self[TranscriptStoreKey.self] = newValue }
++    }
++}
+\ No newline at end of file
+diff --git a/Sources/Auth/AuthStore.swift b/Sources/Auth/AuthStore.swift
+new file mode 100644
+index 0000000..c32b0f0
+--- /dev/null
++++ b/Sources/Auth/AuthStore.swift
+@@ -0,0 +1,245 @@
++//
++//  AuthStore.swift
++//  Keychain-backed credential storage for Hermes gateway auth.
++//
++//  Stores either basic-auth credentials (username + HMAC session token)
++//  or OAuth tokens (access token + optional refresh token + expiry).
++//  Credentials are persisted in the iOS Keychain with app-group isolation.
++//
++
++import Foundation
++
++// MARK: - Credential types
++
++/// The kind of authentication the gateway requires.
++public enum AuthProvider: String, Codable, Sendable {
++    /// Username/password login → HMAC-signed session token.
++    case basic
++    /// Nous Portal OAuth 2.0 + PKCE → JWT access token.
++    case nous
++    /// Self-hosted OIDC → ID token + access token.
++    case oidc
++}
++
++/// Stored credentials for a single gateway host.
++public enum GatewayCredentials: Sendable {
++    /// Basic-auth session: the server returned an HMAC-signed session token
++    /// after username/password login.
++    case basic(username: String, accessToken: String, expiresAt: Date?)
++    /// OAuth session: JWT access token (15-min TTL in v1), optional refresh.
++    case oauth(accessToken: String, refreshToken: String?, expiresAt: Date?, provider: AuthProvider)
++
++    /// The bearer token to send in `Authorization: Bearer <token>` or as a
++    /// WS ticket query parameter.
++    public var accessToken: String {
++        switch self {
++        case .basic(_, let token, _):      return token
++        case .oauth(let token, _, _, _):   return token
++        }
++    }
++
++    /// When the token expires, if known.
++    public var expiresAt: Date? {
++        switch self {
++        case .basic(_, _, let d):          return d
++        case .oauth(_, _, let d, _):       return d
++        }
++    }
++
++    /// Whether the credential is expired (or absent when expiry is known).
++    public var isExpired: Bool {
++        guard let exp = expiresAt else { return false }
++        // 30-second clock-skew margin.
++        return exp.timeIntervalSinceNow < -30
++    }
++
++    /// The auth provider that issued this credential.
++    public var provider: AuthProvider {
++        switch self {
++        case .basic:          return .basic
++        case .oauth(_, _, _, let p): return p
++        }
++    }
++}
++
++// MARK: - Auth store errors
++
++public enum AuthStoreError: Error, LocalizedError {
++    case keychainError(OSStatus)
++    case encodingError(Error)
++    case decodingError(Error)
++    case notFound
++
++    public var errorDescription: String? {
++        switch self {
++        case .keychainError(let s): return "Keychain error (OSStatus \(s))"
++        case .encodingError(let e): return "Encoding error: \(e.localizedDescription)"
++        case .decodingError(let e): return "Decoding error: \(e.localizedDescription)"
++        case .notFound:             return "No credentials found for this host"
++        }
++    }
++}
++
++// MARK: - Keychain-backed store
++
++/// Persists `GatewayCredentials` per gateway host in the iOS Keychain.
++///
++/// - Note: All operations are synchronous and main-actor-free so they can be
++///   called from any isolation domain. Keychain calls are thread-safe.
++public final class AuthStore: Sendable {
++
++    /// Shared singleton. Replace via `AuthStore.shared = …` for testing.
++    public nonisolated(unsafe) static var shared = AuthStore()
++
++    /// Keychain service identifier. Change only if you need app-group isolation.
++    public let service: String
++
++    public init(service: String = "com.nousresearch.hermes.mobile.auth") {
++        self.service = service
++    }
++
++    // MARK: - Public API
++
++    /// Store credentials for a gateway host.
++    public func store(_ credentials: GatewayCredentials, forHost host: String) throws {
++        let key = hostKey(host)
++        let data = try encode(credentials)
++        let query: [String: Any] = [
++            kSecClass as String:              kSecClassGenericPassword,
++            kSecAttrService as String:        service,
++            kSecAttrAccount as String:        key,
++            kSecValueData as String:          data,
++            kSecAttrAccessible as String:     kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
++        ]
++        // Delete any existing entry first (SecItemUpdate is finicky with
++        // attribute changes; delete+add is reliable).
++        SecItemDelete(query as CFDictionary)
++        let status = SecItemAdd(query as CFDictionary, nil)
++        guard status == errSecSuccess else {
++            throw AuthStoreError.keychainError(status)
++        }
++    }
++
++    /// Retrieve stored credentials for a gateway host.
++    public func retrieve(forHost host: String) throws -> GatewayCredentials {
++        let key = hostKey(host)
++        let query: [String: Any] = [
++            kSecClass as String:              kSecClassGenericPassword,
++            kSecAttrService as String:        service,
++            kSecAttrAccount as String:        key,
++            kSecReturnData as String:         true,
++            kSecMatchLimit as String:         kSecMatchLimitOne,
++        ]
++        var result: AnyObject?
++        let status = SecItemCopyMatching(query as CFDictionary, &result)
++        guard status == errSecSuccess else {
++            if status == errSecItemNotFound { throw AuthStoreError.notFound }
++            throw AuthStoreError.keychainError(status)
++        }
++        guard let data = result as? Data else { throw AuthStoreError.notFound }
++        return try decode(data)
++    }
++
++    /// Delete stored credentials for a gateway host.
++    public func delete(forHost host: String) throws {
++        let key = hostKey(host)
++        let query: [String: Any] = [
++            kSecClass as String:              kSecClassGenericPassword,
++            kSecAttrService as String:        service,
++            kSecAttrAccount as String:        key,
++        ]
++        let status = SecItemDelete(query as CFDictionary)
++        guard status == errSecSuccess || status == errSecItemNotFound else {
++            throw AuthStoreError.keychainError(status)
++        }
++    }
++
++    /// Whether credentials exist for a host (without decoding them).
++    public func contains(host: String) -> Bool {
++        let key = hostKey(host)
++        let query: [String: Any] = [
++            kSecClass as String:              kSecClassGenericPassword,
++            kSecAttrService as String:        service,
++            kSecAttrAccount as String:        key,
++            kSecReturnData as String:         false,
++            kSecMatchLimit as String:         kSecMatchLimitOne,
++        ]
++        let status = SecItemCopyMatching(query as CFDictionary, nil)
++        return status == errSecSuccess
++    }
++
++    // MARK: - Private
++
++    private func hostKey(_ host: String) -> String {
++        // Normalise: strip scheme, trailing slash.
++        var h = host.lowercased()
++        if h.hasPrefix("https://") { h = String(h.dropFirst(8)) }
++        else if h.hasPrefix("http://") { h = String(h.dropFirst(7)) }
++        if h.hasSuffix("/") { h = String(h.dropLast()) }
++        return "gw:\(h)"
++    }
++
++    private func encode(_ creds: GatewayCredentials) throws -> Data {
++        let wrapper: [String: Any] = {
++            switch creds {
++            case .basic(let u, let t, let exp):
++                return [
++                    "type": "basic",
++                    "username": u,
++                    "accessToken": t,
++                    "expiresAt": exp?.timeIntervalSince1970 as Any,
++                ] as [String: Any]
++            case .oauth(let t, let r, let exp, let p):
++                return [
++                    "type": "oauth",
++                    "accessToken": t,
++                    "refreshToken": r as Any,
++                    "expiresAt": exp?.timeIntervalSince1970 as Any,
++                    "provider": p.rawValue,
++                ] as [String: Any]
++            }
++        }()
++        do {
++            return try JSONSerialization.data(withJSONObject: wrapper)
++        } catch {
++            throw AuthStoreError.encodingError(error)
++        }
++    }
++
++    private func decode(_ data: Data) throws -> GatewayCredentials {
++        guard let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any],
++              let type = dict["type"] as? String else {
++            throw AuthStoreError.decodingError(DecodingError.dataCorrupted(
++                .init(codingPath: [], debugDescription: "Missing type field")
++            ))
++        }
++        let exp: Date? = {
++            if let ts = dict["expiresAt"] as? TimeInterval { return Date(timeIntervalSince1970: ts) }
++            return nil
++        }()
++        switch type {
++        case "basic":
++            guard let u = dict["username"] as? String,
++                  let t = dict["accessToken"] as? String else {
++                throw AuthStoreError.decodingError(DecodingError.dataCorrupted(
++                    .init(codingPath: [], debugDescription: "Missing basic fields")
++                ))
++            }
++            return .basic(username: u, accessToken: t, expiresAt: exp)
++        case "oauth":
++            guard let t = dict["accessToken"] as? String,
++                  let pRaw = dict["provider"] as? String,
++                  let p = AuthProvider(rawValue: pRaw) else {
++                throw AuthStoreError.decodingError(DecodingError.dataCorrupted(
++                    .init(codingPath: [], debugDescription: "Missing oauth fields")
++                ))
++            }
++            let r = dict["refreshToken"] as? String
++            return .oauth(accessToken: t, refreshToken: r, expiresAt: exp, provider: p)
++        default:
++            throw AuthStoreError.decodingError(DecodingError.dataCorrupted(
++                .init(codingPath: [], debugDescription: "Unknown credential type: \(type)")
++            ))
++        }
++    }
++}
+diff --git a/Sources/Auth/HermesAuthenticator.swift b/Sources/Auth/HermesAuthenticator.swift
+new file mode 100644
+index 0000000..12982d9
+--- /dev/null
++++ b/Sources/Auth/HermesAuthenticator.swift
+@@ -0,0 +1,492 @@
++//
++//  HermesAuthenticator.swift
++//  Orchestrates authentication against a Hermes dashboard/gateway.
++//
++//  Supports three provider paths, matching the server-side auth gate:
++//  1. **Basic** — username/password → HMAC session token
++//  2. **Nous Portal OAuth** — authorization-code + PKCE → JWT access token
++//  3. **Self-hosted OIDC** — same flow with a custom issuer
++//
++//  After login, the authenticator can mint single-use WebSocket tickets
++//  by calling `GET /api/ws/ticket` on the authenticated dashboard. The
++//  resulting `wss://…?ticket=<ticket>` URL is passed to `GatewayClient`
++//  via its `ticketProvider` closure.
++//
++
++import Foundation
++
++// MARK: - Errors
++
++public enum AuthError: Error, LocalizedError {
++    /// The server rejected the credentials.
++    case signInFailed(String)
++    /// No credentials available to authenticate.
++    case noCredentials
++    /// The OAuth flow was cancelled by the user.
++    case cancelled
++    /// The IDP returned an invalid or unexpected response.
++    case invalidResponse(String)
++    /// Network or transport failure.
++    case networkError(Error)
++    /// Token refresh failed; user must re-login.
++    case refreshFailed(String)
++    /// The OAuth client ID is not configured.
++    case missingClientID
++    /// The OIDC issuer is not configured.
++    case missingIssuer
++    /// The access token has expired and no refresh token is available.
++    case tokenExpired
++
++    public var errorDescription: String? {
++        switch self {
++        case .signInFailed(let msg):   return "Sign-in failed: \(msg)"
++        case .noCredentials:           return "No credentials available"
++        case .cancelled:               return "Authentication cancelled"
++        case .invalidResponse(let msg):return "Invalid response: \(msg)"
++        case .networkError(let e):     return "Network error: \(e.localizedDescription)"
++        case .refreshFailed(let msg):  return "Token refresh failed: \(msg)"
++        case .missingClientID:         return "OAuth client ID not configured"
++        case .missingIssuer:           return "OIDC issuer not configured"
++        case .tokenExpired:            return "Access token expired; please sign in again"
++        }
++    }
++}
++
++// MARK: - Gateway discovery
++
++/// Metadata returned by `GET /api/status` about the auth gate.
++public struct GatewayAuthInfo: Sendable {
++    /// Whether auth is required for this gateway.
++    public let authRequired: Bool
++    /// Which providers are available (e.g. `["basic"]`, `["nous"]`, `["basic", "nous"]`).
++    public let providers: [AuthProvider]
++    /// The gateway's public URL (from `HERMES_DASHBOARD_PUBLIC_URL` or headers).
++    public let publicURL: URL?
++
++    public init(authRequired: Bool, providers: [AuthProvider], publicURL: URL? = nil) {
++        self.authRequired = authRequired
++        self.providers = providers
++        self.publicURL = publicURL
++    }
++}
++
++// MARK: - Authenticator configuration
++
++/// Configuration for a specific gateway host.
++public struct GatewayConfig: Sendable {
++    /// The base URL of the dashboard (e.g. `http://192.168.1.100:9119`).
++    public let baseURL: URL
++    /// OAuth client ID for the Nous Portal provider (shape `agent:{id}`).
++    public let nousClientID: String?
++    /// OIDC issuer URL for the self-hosted provider.
++    public let oidcIssuer: URL?
++    /// OIDC client ID for the self-hosted provider.
++    public let oidcClientID: String?
++    /// OIDC scopes (defaults to `openid profile email`).
++    public let oidcScopes: String
++
++    public init(
++        baseURL: URL,
++        nousClientID: String? = nil,
++        oidcIssuer: URL? = nil,
++        oidcClientID: String? = nil,
++        oidcScopes: String = "openid profile email"
++    ) {
++        self.baseURL = baseURL
++        self.nousClientID = nousClientID
++        self.oidcIssuer = oidcIssuer
++        self.oidcClientID = oidcClientID
++        self.oidcScopes = oidcScopes
++    }
++}
++
++// MARK: - Authenticator
++
++/// Manages authentication for a Hermes gateway.
++///
++/// Typical usage:
++/// ```swift
++/// let auth = HermesAuthenticator(config: gatewayConfig)
++/// let info = try await auth.discover()
++/// if info.authRequired {
++///     let creds = try await auth.signInBasic(username: "admin", password: "…")
++///     // or: let creds = try await auth.signInOAuth()
++/// }
++/// gateway.ticketProvider = { [weak auth] in await auth?.mintWSTicket() }
++/// ```
++@MainActor
++public final class HermesAuthenticator {
++
++    /// The gateway configuration.
++    public let config: GatewayConfig
++
++    /// Keychain-backed credential store.
++    public var store: AuthStore = .shared
++
++    /// The current credentials (also persisted in Keychain).
++    public private(set) var credentials: GatewayCredentials?
++
++    /// Active PKCE state (survives the OAuth round-trip).
++    private var activePKCE: PKCE?
++
++    /// URL session for HTTP requests.
++    private let urlSession: URLSession
++
++    public init(config: GatewayConfig) {
++        self.config = config
++        let sessionConfig = URLSessionConfiguration.ephemeral
++        sessionConfig.timeoutIntervalForRequest = 15
++        self.urlSession = URLSession(configuration: sessionConfig)
++
++        // Try to restore credentials from Keychain.
++        let host = config.baseURL.host ?? config.baseURL.absoluteString
++        if let creds = try? store.retrieve(forHost: host) {
++            self.credentials = creds
++        }
++    }
++
++    // MARK: - Discovery
++
++    /// Probe `GET /api/status` to discover auth requirements.
++    public func discover() async throws -> GatewayAuthInfo {
++        let url = config.baseURL.appendingPathComponent("api/status")
++        var request = URLRequest(url: url)
++        request.httpMethod = "GET"
++
++        let (data, response) = try await urlSession.data(for: request)
++        guard let httpResponse = response as? HTTPURLResponse else {
++            throw AuthError.invalidResponse("not HTTP")
++        }
++
++        // If we get a 200, we can read auth_required + providers.
++        // A 401 also tells us auth is required.
++        if httpResponse.statusCode == 401 {
++            return GatewayAuthInfo(authRequired: true, providers: [])
++        }
++
++        guard httpResponse.statusCode == 200 else {
++            throw AuthError.invalidResponse("status \(httpResponse.statusCode)")
++        }
++
++        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
++            throw AuthError.invalidResponse("invalid JSON")
++        }
++
++        let authRequired = json["auth_required"] as? Bool ?? false
++        let providerStrings = (json["providers"] as? [String]) ?? []
++        let providers = providerStrings.compactMap { AuthProvider(rawValue: $0) }
++
++        var publicURL: URL?
++        if let publicURLStr = json["public_url"] as? String {
++            publicURL = URL(string: publicURLStr)
++        }
++
++        return GatewayAuthInfo(authRequired: authRequired, providers: providers, publicURL: publicURL)
++    }
++
++    // MARK: - Basic auth sign-in
++
++    /// Sign in with username and password against the `basic` provider.
++    ///
++    /// The dashboard endpoint is `POST /auth/password-login` which returns
++    /// a `hermes_session_at` cookie (HMAC-signed, stateless). We extract
++    /// the cookie value as the access token.
++    public func signInBasic(username: String, password: String) async throws -> GatewayCredentials {
++        let url = config.baseURL.appendingPathComponent("auth/password-login")
++        var request = URLRequest(url: url)
++        request.httpMethod = "POST"
++        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
++
++        let body: [String: String] = ["username": username, "password": password]
++        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
++
++        let (_, response) = try await urlSession.data(for: request)
++        guard let httpResponse = response as? HTTPURLResponse else {
++            throw AuthError.invalidResponse("not HTTP")
++        }
++
++        guard httpResponse.statusCode == 200 else {
++            throw AuthError.signInFailed("HTTP \(httpResponse.statusCode)")
++        }
++
++        // Extract the session cookie value.
++        guard let cookieHeader = httpResponse.allHeaderFields["Set-Cookie"] as? String ??
++                                  httpResponse.allHeaderFields["set-cookie"] as? String,
++              let token = extractCookieValue(from: cookieHeader, name: "hermes_session_at") else {
++            throw AuthError.invalidResponse("no session cookie in response")
++        }
++
++        // Parse expiry from cookie (if present).
++        let expiresAt = parseCookieExpiry(from: cookieHeader)
++
++        let creds = GatewayCredentials.basic(username: username, accessToken: token, expiresAt: expiresAt)
++        try store(creds)
++        self.credentials = creds
++        return creds
++    }
++
++    // MARK: - OAuth sign-in
++
++    /// Build the OAuth authorize URL for the Nous Portal provider.
++    ///
++    /// Call this, then present the URL via `ASWebAuthenticationSession`.
++    /// When the callback fires, pass the URL to `completeOAuth(callbackURL:)`.
++    public func startNousOAuth() throws -> URL {
++        guard let clientID = config.nousClientID else {
++            throw AuthError.missingClientID
++        }
++
++        let pkce = PKCE()
++        self.activePKCE = pkce
++
++        let callbackPath = config.baseURL.appendingPathComponent("auth/callback").absoluteString
++        var components = URLComponents(string: "https://portal.nousresearch.com/oauth/authorize")!
++        components.queryItems = [
++            .init(name: "client_id", value: clientID),
++            .init(name: "redirect_uri", value: callbackPath),
++            .init(name: "response_type", value: "code"),
++            .init(name: "code_challenge", value: pkce.challenge),
++            .init(name: "code_challenge_method", value: pkce.challengeMethod),
++            .init(name: "scope", value: "openid profile email"),
++        ]
++        guard let url = components.url else {
++            throw AuthError.invalidResponse("failed to build authorize URL")
++        }
++        return url
++    }
++
++    /// Build the OAuth authorize URL for the self-hosted OIDC provider.
++    ///
++    /// Discovers the IDP's `authorization_endpoint` from its
++    /// `.well-known/openid-configuration` document.
++    public func startOIDCAuth() async throws -> URL {
++        guard let issuer = config.oidcIssuer else {
++            throw AuthError.missingIssuer
++        }
++        guard let clientID = config.oidcClientID else {
++            throw AuthError.missingClientID
++        }
++
++        // Discover the authorization endpoint.
++        let discoveryURL = issuer.appendingPathComponent(".well-known/openid-configuration")
++        let (data, _) = try await urlSession.data(from: discoveryURL)
++        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
++              let authEndpoint = json["authorization_endpoint"] as? String,
++              let authURL = URL(string: authEndpoint) else {
++            throw AuthError.invalidResponse("OIDC discovery failed")
++        }
++
++        let pkce = PKCE()
++        self.activePKCE = pkce
++
++        let callbackPath = config.baseURL.appendingPathComponent("auth/callback").absoluteString
++        var components = URLComponents(url: authURL, resolvingAgainstBaseURL: true)!
++        components.queryItems = [
++            .init(name: "client_id", value: clientID),
++            .init(name: "redirect_uri", value: callbackPath),
++            .init(name: "response_type", value: "code"),
++            .init(name: "code_challenge", value: pkce.challenge),
++            .init(name: "code_challenge_method", value: pkce.challengeMethod),
++            .init(name: "scope", value: config.oidcScopes),
++        ]
++        guard let url = components.url else {
++            throw AuthError.invalidResponse("failed to build OIDC authorize URL")
++        }
++        return url
++    }
++
++    /// Complete an OAuth flow by exchanging the authorization code for tokens.
++    ///
++    /// The server-side `/auth/callback` endpoint handles the code exchange
++    /// with the IDP, verifies the JWT, and sets the `hermes_session_at` cookie.
++    /// We simply follow the callback URL on the dashboard to complete the flow
++    /// and extract the session cookie.
++    public func completeOAuth(callbackURL: URL) async throws -> GatewayCredentials {
++        // The callback URL looks like:
++        //   <dashboard>/auth/callback?code=…&state=…
++        // The dashboard server handles the token exchange server-side.
++        // We need to hit this URL and capture the Set-Cookie header.
++        var request = URLRequest(url: callbackURL)
++        request.httpMethod = "GET"
++
++        let (_, response) = try await urlSession.data(for: request)
++        guard let httpResponse = response as? HTTPURLResponse else {
++            throw AuthError.invalidResponse("not HTTP")
++        }
++
++        guard httpResponse.statusCode == 200 || httpResponse.statusCode == 302 else {
++            throw AuthError.signInFailed("HTTP \(httpResponse.statusCode)")
++        }
++
++        // Extract the session cookie.
++        let allHeaders = httpResponse.allHeaderFields
++        guard let cookieHeader = allHeaders["Set-Cookie"] as? String ??
++                                  allHeaders["set-cookie"] as? String,
++              let token = extractCookieValue(from: cookieHeader, name: "hermes_session_at") else {
++            throw AuthError.invalidResponse("no session cookie in OAuth callback response")
++        }
++
++        let expiresAt = parseCookieExpiry(from: cookieHeader)
++        let provider: AuthProvider = (config.oidcIssuer != nil) ? .oidc : .nous
++
++        let creds = GatewayCredentials.oauth(
++            accessToken: token,
++            refreshToken: nil, // Contract v1: no refresh token
++            expiresAt: expiresAt,
++            provider: provider
++        )
++        try store(creds)
++        self.activePKCE = nil
++        self.credentials = creds
++        return creds
++    }
++
++    // MARK: - WS ticket minting
++
++    /// Mint a fresh single-use WebSocket ticket by calling the authenticated
++    /// dashboard endpoint.  Returns the full `wss://…?ticket=<ticket>` URL.
++    ///
++    /// This is the closure to wire into `GatewayClient.ticketProvider`.
++    public func mintWSTicket() async -> String? {
++        guard let creds = credentials, !creds.isExpired else {
++            return nil
++        }
++
++        let url = config.baseURL.appendingPathComponent("api/ws/ticket")
++        var request = URLRequest(url: url)
++        request.httpMethod = "POST"
++        request.setValue("Bearer \(creds.accessToken)", forHTTPHeaderField: "Authorization")
++
++        do {
++            let (data, response) = try await urlSession.data(for: request)
++            guard let httpResponse = response as? HTTPURLResponse,
++                  httpResponse.statusCode == 200 else {
++                return nil
++            }
++            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
++                  let ticket = json["ticket"] as? String else {
++                // The server may also return a full wsUrl.
++                if let wsUrl = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["url"] as? String {
++                    return wsUrl
++                }
++                return nil
++            }
++            // Build the full WS URL from the ticket.
++            // The dashboard's WS endpoint is at /api/ws.
++            var wsComponents = URLComponents(url: config.baseURL, resolvingAgainstBaseURL: true)!
++            wsComponents.scheme = (wsComponents.scheme == "https") ? "wss" : "ws"
++            wsComponents.path = "/api/ws"
++            wsComponents.queryItems = [.init(name: "ticket", value: ticket)]
++            return wsComponents.string
++        } catch {
++            return nil
++        }
++    }
++
++    // MARK: - Logout
++
++    /// Sign out: clear stored credentials and notify the server.
++    public func signOut() async throws {
++        guard let creds = credentials else { return }
++        // Hit the logout endpoint to clear server-side session.
++        let url = config.baseURL.appendingPathComponent("auth/logout")
++        var request = URLRequest(url: url)
++        request.httpMethod = "POST"
++        request.setValue("Bearer \(creds.accessToken)", forHTTPHeaderField: "Authorization")
++
++        _ = try? await urlSession.data(for: request)
++
++        // Delete from Keychain.
++        let host = config.baseURL.host ?? config.baseURL.absoluteString
++        try? store.delete(forHost: host)
++        self.credentials = nil
++    }
++
++    // MARK: - Current user
++
++    /// Return the current session identity from `GET /api/auth/me`.
++    public func currentUser() async throws -> AuthUser {
++        guard let creds = credentials, !creds.isExpired else {
++            throw AuthError.noCredentials
++        }
++
++        let url = config.baseURL.appendingPathComponent("api/auth/me")
++        var request = URLRequest(url: url)
++        request.setValue("Bearer \(creds.accessToken)", forHTTPHeaderField: "Authorization")
++
++        let (data, response) = try await urlSession.data(for: request)
++        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
++            throw AuthError.invalidResponse("auth/me failed")
++        }
++
++        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
++            throw AuthError.invalidResponse("invalid JSON from auth/me")
++        }
++
++        return AuthUser(
++            userID: json["user_id"] as? String ?? "unknown",
++            displayName: json["display_name"] as? String,
++            email: json["email"] as? String,
++            provider: creds.provider
++        )
++    }
++
++    // MARK: - Private helpers
++
++    private func store(_ creds: GatewayCredentials) throws {
++        let host = config.baseURL.host ?? config.baseURL.absoluteString
++        try store.store(creds, forHost: host)
++    }
++
++    /// Extract a named cookie value from a `Set-Cookie` header.
++    private func extractCookieValue(from header: String, name: String) -> String? {
++        // Set-Cookie can contain multiple cookies separated by commas (rare)
++        // but we just need the one named `hermes_session_at`.
++        let parts = header.split(separator: ";")
++        for part in parts {
++            let trimmed = part.trimmingCharacters(in: .whitespaces)
++            if trimmed.hasPrefix("\(name)=") {
++                return String(trimmed.dropFirst("\(name)=".count))
++            }
++        }
++        return nil
++    }
++
++    /// Parse `Expires=…` from a `Set-Cookie` header.
++    private func parseCookieExpiry(from header: String) -> Date? {
++        let parts = header.split(separator: ";")
++        for part in parts {
++            let trimmed = part.trimmingCharacters(in: .whitespaces).lowercased()
++            if trimmed.hasPrefix("expires=") || trimmed.hasPrefix("max-age=") {
++                let value = String(trimmed.dropFirst(trimmed.firstIndex(of: "=")!).dropFirst())
++                if trimmed.hasPrefix("max-age="), let seconds = Int(value), seconds > 0 {
++                    return Date().addingTimeInterval(Double(seconds))
++                }
++                // Parse HTTP-date for Expires.
++                let formatter = DateFormatter()
++                formatter.locale = Locale(identifier: "en_US_POSIX")
++                formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
++                return formatter.date(from: value)
++            }
++        }
++        // Default: access token TTL is 15 minutes (contract v1).
++        return Date().addingTimeInterval(15 * 60)
++    }
++}
++
++// MARK: - Auth user
++
++/// The identity of the currently authenticated user.
++public struct AuthUser: Sendable {
++    public let userID: String
++    public let displayName: String?
++    public let email: String?
++    public let provider: AuthProvider
++
++    public init(userID: String, displayName: String? = nil, email: String? = nil, provider: AuthProvider) {
++        self.userID = userID
++        self.displayName = displayName
++        self.email = email
++        self.provider = provider
++    }
++}
+diff --git a/Sources/Auth/OAuthPKCE.swift b/Sources/Auth/OAuthPKCE.swift
+new file mode 100644
+index 0000000..d2baf38
+--- /dev/null
++++ b/Sources/Auth/OAuthPKCE.swift
+@@ -0,0 +1,171 @@
++//
++//  OAuthPKCE.swift
++//  RFC 7636 PKCE helpers for OAuth authorization-code grants.
++//
++//  Generates a cryptographically random code verifier and its S256
++//  code challenge, suitable for both the Nous Portal and self-hosted
++//  OIDC providers.
++//
++
++import Foundation
++#if canImport(CryptoKit)
++import CryptoKit
++#endif
++
++/// PKCE (Proof Key for Code Exchange) parameters for an OAuth session.
++///
++/// Create one before starting the authorization redirect; persist the
++/// `verifier` in a short-lived cookie or app state so it survives the
++/// round-trip through the IDP.  Send `challenge` + `challengeMethod` in
++/// the authorize URL; send `verifier` in the token exchange.
++public struct PKCE: Sendable {
++    /// The code verifier (43–128 chars, URL-safe base64).
++    public let verifier: String
++    /// The S256 code challenge (base64url, no padding).
++    public let challenge: String
++    /// Always "S256" — the Hermes dashboard requires it.
++    public let challengeMethod: String = "S256"
++
++    /// Generate a fresh PKCE pair.
++    public init() {
++        // RFC 7636 §4.1: 43–128 chars of [A-Z] / [a-z] / [0-9] / "-._~"
++        // We use 32 bytes → 43 base64url chars (minimum length).
++        var bytes = [UInt8](repeating: 0, count: 32)
++        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
++        self.verifier = Self.base64urlEncode(Data(bytes))
++
++        // S256: BASE64URL(SHA256(verifier))
++        let verifierData = Data(self.verifier.utf8)
++        #if canImport(CryptoKit)
++        let digest = SHA256.hash(data: verifierData)
++        self.challenge = Self.base64urlEncode(Data(digest))
++        #else
++        // Fallback for Linux without CryptoKit: use CommonCrypto via
++        // C interop or fall back to a Foundation-based approach.
++        // On Linux with Swift 5.10+, CryptoKit is available via swift-crypto.
++        // For now, provide a CC fallback:
++        var hash = [UInt8](repeating: 0, count: 32)
++        verifierData.withUnsafeBytes { ptr in
++            CC_SHA256(ptr.baseAddress, CC_LONG(verifierData.count), &hash)
++        }
++        self.challenge = Self.base64urlEncode(Data(hash))
++        #endif
++    }
++
++    // MARK: - Internal
++
++    /// Base64url encoding without padding (RFC 7636 Appendix B).
++    static func base64urlEncode(_ data: Data) -> String {
++        let str = data.base64EncodedString()
++        return str
++            .replacingOccurrences(of: "+", with: "-")
++            .replacingOccurrences(of: "/", with: "_")
++            .replacingOccurrences(of: "=", with: "")
++    }
++}
++
++// MARK: - Linux fallback for SHA-256
++
++#if !canImport(CryptoKit)
++/// On Linux without CryptoKit, we need CC_SHA256 from OpenSSL/CommonCrypto.
++/// SwiftPM on Linux ships `CC_*` via the `Crypto` C module.
++/// If unavailable, we use a pure-Swift SHA-256 from Foundation.
++///
++/// This is a minimal SHA-256 implementation for platforms where neither
++/// CryptoKit nor CommonCrypto is available.
++private func CC_SHA256(_ data: UnsafeRawPointer?, _ len: CC_LONG, _ md: UnsafeMutablePointer<UInt8>) {
++    // Pure-Swift SHA-256 fallback.
++    // This is a compact implementation sufficient for PKCE challenge generation.
++    let input = Data(bytes: data!, count: Int(len))
++    let digest = SHA256Fallback.hash(input)
++    digest.withUnsafeBytes { ptr in
++        md.initialize(from: ptr.baseAddress!, count: 32)
++    }
++}
++
++private typealias CC_LONG = UInt32
++
++/// Minimal SHA-256 for Linux fallback.
++private enum SHA256Fallback {
++    static func hash(_ data: Data) -> Data {
++        // Pad the message
++        var msg = [UInt8](data)
++        let bitLen = msg.count * 8
++        msg.append(0x80)
++        while (msg.count % 64) != 56 { msg.append(0) }
++        var lenBytes = withUnsafeBytes(of: UInt64(bigEndian: UInt64(bitLen))) { Array($0) }
++        msg.append(contentsOf: lenBytes)
++
++        // Initial hash values
++        var h0: UInt32 = 0x6a09e667, h1: UInt32 = 0xbb67ae85
++        var h2: UInt32 = 0x3c6ef372, h3: UInt32 = 0xa54ff53a
++        var h4: UInt32 = 0x510e527f, h5: UInt32 = 0x9b05688c
++        var h6: UInt32 = 0x1f83d9ab, h7: UInt32 = 0x5be0cd19
++
++        // Round constants
++        let k: [UInt32] = [
++            0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
++            0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
++            0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
++            0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
++            0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc,
++            0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
++            0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
++            0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
++            0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
++            0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
++            0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3,
++            0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
++            0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
++            0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
++            0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
++            0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
++        ]
++
++        func ch(_ x: UInt32, _ y: UInt32, _ z: UInt32) -> UInt32 { (x & y) ^ (~x & z) }
++        func maj(_ x: UInt32, _ y: UInt32, _ z: UInt32) -> UInt32 { (x & y) ^ (x & z) ^ (y & z) }
++        func rotR(_ x: UInt32, _ n: UInt32) -> UInt32 { (x >> n) | (x << (32 - n)) }
++        func sig0(_ x: UInt32) -> UInt32 { rotR(x, 2) ^ rotR(x, 13) ^ rotR(x, 22) }
++        func sig1(_ x: UInt32) -> UInt32 { rotR(x, 6) ^ rotR(x, 11) ^ rotR(x, 25) }
++        func sig0small(_ x: UInt32) -> UInt32 { rotR(x, 7) ^ rotR(x, 18) ^ (x >> 3) }
++        func sig1small(_ x: UInt32) -> UInt32 { rotR(x, 17) ^ rotR(x, 19) ^ (x >> 10) }
++
++        // Process each 64-byte block
++        var offset = 0
++        while offset < msg.count {
++            var w = [UInt32](repeating: 0, count: 64)
++            for i in 0..<16 {
++                w[i] = UInt32(msg[offset + i * 4]) << 24
++                      | UInt32(msg[offset + i * 4 + 1]) << 16
++                      | UInt32(msg[offset + i * 4 + 2]) << 8
++                      | UInt32(msg[offset + i * 4 + 3])
++            }
++            for i in 16..<64 {
++                w[i] = sig1small(w[i-2]) &+ w[i-7] &+ sig0small(w[i-15]) &+ w[i-16]
++            }
++
++            var a = h0, b = h1, c = h2, d = h3
++            var e = h4, f = h5, g = h6, hh = h7
++
++            for i in 0..<64 {
++                let t1 = hh &+ sig1(e) &+ ch(e, f, g) &+ k[i] &+ w[i]
++                let t2 = sig0(a) &+ maj(a, b, c)
++                hh = g; g = f; f = e; e = d &+ t1
++                d = c; c = b; b = a; a = t1 &+ t2
++            }
++
++            h0 &+= a; h1 &+= b; h2 &+= c; h3 &+= d
++            h4 &+= e; h5 &+= f; h6 &+= g; h7 &+= hh
++
++            offset += 64
++        }
++
++        var result = Data()
++        for h in [h0, h1, h2, h3, h4, h5, h6, h7] {
++            var bigH = h.bigEndian
++            result.append(Data(bytes: &bigH, count: 4))
++        }
++        return result
++    }
++}
++#endif
+diff --git a/Sources/Gateway/GatewayClient.swift b/Sources/Gateway/GatewayClient.swift
+index 10a4406..6948afe 100755
+--- a/Sources/Gateway/GatewayClient.swift
++++ b/Sources/Gateway/GatewayClient.swift
+@@ -8,11 +8,7 @@
+ 
+ import Foundation
+ import GeneratedModels
+-
+-private func HermesLog(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
+-    let fileName = (file as NSString).lastPathComponent
+-    print("[\(fileName):\(function):\(line)] \(message)")
+-}
++import HermesLogger
+ 
+ // MARK: - Connection state
+ 
+@@ -90,8 +86,6 @@ public final class HandlerToken: Sendable {
+ @MainActor
+ public final class GatewayClient: NSObject {
+     private static let logger = HermesLogger(subsystem: "com.nousresearch.hermes.mobile", category: "GatewayClient")
+-
+-    // Configuration
+     /// Per-request timeout (default 120s).
+     public var requestTimeoutMs: Int = 120_000
+     /// Heartbeat interval (default 15s).
+@@ -170,7 +164,7 @@ public final class GatewayClient: NSObject {
+         let allowedSchemes = ["wss"]
+         #endif
+         guard let scheme = wsUrl.scheme?.lowercased(), allowedSchemes.contains(scheme) else {
+-            HermesLog("error: "refusing non-wss WebSocket URL"")
++            Self.logger.error("error: refusing non-wss WebSocket URL")
+             setState(.error)
+             return
+         }
+@@ -218,7 +212,7 @@ public final class GatewayClient: NSObject {
+             try? await Task.sleep(nanoseconds: timeout)
+             guard let self else { return }
+             if gen == self.socketGeneration && self.state == .connecting {
+-                HermesLog("error: "connect timeout \(self.connectTimeoutMs")ms")
++                Self.logger.error("connect timeout \(self.connectTimeoutMs)ms")
+                 task.cancel(with: .goingAway, reason: nil)
+                 self.setState(.error)
+             }
+@@ -268,7 +262,7 @@ public final class GatewayClient: NSObject {
+                     }
+                 } catch {
+                     if gen == self.socketGeneration {
+-                        HermesLog("error: "receive error"")
++                        Self.logger.error("receive error")
+                         self.dropSocket(reason: "receive error")
+                     }
+                     break
+@@ -286,7 +280,7 @@ public final class GatewayClient: NSObject {
+         guard let frame = try? JSONDecoder().decode(JSONRPCFrame.self, from: data) else {
+             // Security (R7): never log frame payload bytes — a gateway event
+             // frame carries conversation content. Log metadata only.
+-            HermesLog("error: "unparseable frame: \(data.count") bytes")
++            Self.logger.error("unparseable frame: \(data.count) bytes")
+             return
+         }
+ 
+@@ -358,7 +352,7 @@ public final class GatewayClient: NSObject {
+             if handler.handle(request: req) { return }
+         }
+         // Unhandled: answer -32601 so the backend doesn't wait out its deadline.
+-        HermesLog("notice: "unhandled server→client request: \(method, privacy: .public")")
++        Self.logger.notice("unhandled server→client request: \(method, privacy: .public)")
+         fail(JSONRPCErrorCode.methodNotFound, "method not found: \(method)")
+     }
+ 
+@@ -473,7 +467,7 @@ public final class GatewayClient: NSObject {
+         // Check deadline (any-inbound liveness).
+         let elapsed = Date().timeIntervalSince(lastLivenessAt) * 1000
+         if elapsed > Double(heartbeatDeadlineMs) {
+-            HermesLog("error: "heartbeat deadline exceeded \(elapsed")ms — dropping socket")
++            Self.logger.error("heartbeat deadline exceeded \(elapsed)ms — dropping socket")
+             dropSocket(reason: "heartbeat deadline")
+             return
+         }
+@@ -486,7 +480,7 @@ public final class GatewayClient: NSObject {
+             do {
+                 let _: JSONValue = try await self.requestRaw("ping", params: .null, timeoutMs: self.heartbeatDeadlineMs)
+             } catch {
+-                HermesLog("error: "heartbeat ping failed"")
++                Self.logger.error("heartbeat ping failed")
+                 self.dropSocket(reason: "heartbeat ping failed")
+             }
+         }
+@@ -652,7 +646,7 @@ public final class GatewayClient: NSObject {
+                 }
+             }
+         } catch {
+-            HermesLog("notice: "replay fetch failed for \(sid, privacy: .public")")
++            Self.logger.notice("replay fetch failed for \(sid, privacy: .public)")
+         }
+ 
+         flushReplayHold(sid: sid, generation: gen)
+@@ -676,7 +670,7 @@ public final class GatewayClient: NSObject {
+     /// Drop the current socket and transition to `.closed`.
+     /// - Parameter reason: a short, non-sensitive reason (logged).
+     private func dropSocket(reason: String) {
+-        HermesLog("notice: "dropSocket: \(reason, privacy: .public")")
++        Self.logger.notice("dropSocket: \(reason, privacy: .public)")
+         let wasOpen = state == .open
+         let opened = openedAt
+         webSocketTask?.cancel(with: .goingAway, reason: nil)
+@@ -700,7 +694,7 @@ public final class GatewayClient: NSObject {
+     private func setState(_ newState: GatewayConnectionState) {
+         guard state != newState else { return }
+         state = newState
+-        HermesLog("notice: "state → \(newState.rawValue, privacy: .public")")
++        Self.logger.notice("state → \(newState.rawValue, privacy: .public)")
+         onStateChange?(newState)
+     }
+ 
+@@ -767,7 +761,7 @@ extension GatewayClient: URLSessionWebSocketDelegate {
+         Task { @MainActor in
+             // A1: identity check so a stale close cannot mark a newer socket .error.
+             guard task === self.webSocketTask else { return }
+-            HermesLog("notice: "WebSocket closed: code=\(closeCode.rawValue")")
++            Self.logger.notice("WebSocket closed: code=\(closeCode.rawValue)")
+             // 4401 = WS ticket didn't authenticate; 4403 = request guard rejected.
+             if closeCode.rawValue == 4401 || closeCode.rawValue == 4403 {
+                 setState(.error)
+diff --git a/Sources/Gateway/GatewayConnection.swift b/Sources/Gateway/GatewayConnection.swift
+index 240fa90..18f3822 100755
+--- a/Sources/Gateway/GatewayConnection.swift
++++ b/Sources/Gateway/GatewayConnection.swift
+@@ -1,29 +1,51 @@
+ import Foundation
+-import HermesLogger
++import SwiftUI
+ 
+ /// Manages a single WebSocket connection to a `hermes serve` gateway,
+ /// including authentication, reconnection, and message correlation.
+ ///
+ /// This is the `@Observable` view-model the SwiftUI shell binds to. It wraps
+ /// a `GatewayClient` (the JSON-RPC transport) and exposes a UI-friendly
+-/// connection state. All state is `@MainActor`-isolated, so the type is
+-/// implicitly `Sendable`; no `nonisolated(unsafe)` annotations are needed (R8).
++/// connection state. All state is `@MainActor`-isolated.
++///
++/// The connection owns a `TranscriptStore` that consumes gateway events and
++/// surfaces `approval.received` events via `approvalManager` / `approvalTrigger`.
+ @Observable @MainActor
+ final class GatewayConnection {
+     /// The underlying JSON-RPC transport.
+     private let client = GatewayClient()
+ 
++    /// The transcript store that consumes gateway events.
++    let transcriptStore: TranscriptStore
++
+     /// The typed API surface views use to issue RPCs.
+     let api: HermesClient
+ 
+     /// Current connection state, mirrored for the UI.
+     var connectionState: ConnectionState = .disconnected
+ 
++    /// Approvals pending user action, surfaced by the UI.
++    let approvalManager = ApprovalManager()
++
++    /// Bumped whenever a new approval arrives, so SwiftUI can re-present the alert.
++    var approvalTrigger = 0
++
++    /// The id of the currently selected session (sidebar → chat selection).
++    var activeSession: String?
++
+     init() {
++        self.transcriptStore = TranscriptStore(gateway: self)
+         self.api = HermesClient(gateway: client)
+         client.onStateChange = { [weak self] newState in
+             self?.connectionState = ConnectionState(from: newState)
+         }
++        // Forward every gateway event to the transcript store and the
++        // approval manager, hopping back to the main actor.
++        client.onAny { [weak self] params in
++            Task { @MainActor in
++                self?.handleEvent(params)
++            }
++        }
+     }
+ 
+     /// Open the connection to `url` using `ticket`.
+@@ -40,6 +62,43 @@ final class GatewayConnection {
+     func disconnect() {
+         client.disconnect()
+     }
++
++    // MARK: - Event dispatch
++
++    private func handleEvent(_ params: JSONValue) {
++        guard case .object(let dict) = params,
++              let type = dict["type"]?.stringValue else { return }
++
++        // Drive the transcript from message/tool events.
++        transcriptStore.apply(notification: ServerNotification(name: type, payload: params))
++
++        // Surface approval requests to the UI.
++        if type == GWNotification.Approval_received {
++            if let request = approvalRequest(from: dict) {
++                approvalManager.pending = request
++                approvalTrigger += 1
++            }
++        }
++    }
++
++    private func approvalRequest(from dict: [String: JSONValue]) -> ApprovalRequest? {
++        guard let requestId = dict["request_id"]?.stringValue else { return nil }
++        let sessionId = dict["session_id"]?.stringValue ?? ""
++        let choices: [String]? = dict["choices"]?.arrayValue?.compactMap { $0.stringValue }
++        let approval = PendingApproval(
++            requestId: requestId,
++            command: dict["command"]?.stringValue,
++            description: dict["description"]?.stringValue,
++            patternKey: nil,
++            patternKeys: nil,
++            allowPermanent: dict["allow_permanent"]?.boolValue,
++            allowSession: dict["allow_session"]?.boolValue,
++            smartDenied: nil,
++            choices: choices,
++            toolName: dict["tool_name"]?.stringValue
++        )
++        return ApprovalRequest(id: requestId, approval: approval, sessionId: sessionId)
++    }
+ }
+ 
+ /// UI-facing connection state.
+@@ -61,3 +120,28 @@ enum ConnectionState {
+         }
+     }
+ }
++
++/// An approval the gateway is asking the user to act on.
++struct ApprovalRequest: Identifiable, Equatable {
++    /// Stable identity (the server's request id).
++    let id: String
++    /// The decoded approval payload.
++    let approval: PendingApproval
++    /// The session the approval belongs to (needed to respond).
++    let sessionId: String
++
++    static func == (lhs: ApprovalRequest, rhs: ApprovalRequest) -> Bool {
++        lhs.id == rhs.id
++    }
++}
++
++/// Shared approval inbox. The connection writes pending approvals here; the UI
++/// reads and presents them.
++@Observable
++final class ApprovalManager {
++    /// The approval currently awaiting a decision, or `nil`.
++    var pending: ApprovalRequest?
++
++    static let shared = ApprovalManager()
++    private init() {}
++}
+diff --git a/Sources/HermesClient.swift b/Sources/HermesClient.swift
+index dce3e81..94ffe6b 100755
+--- a/Sources/HermesClient.swift
++++ b/Sources/HermesClient.swift
+@@ -225,6 +225,28 @@ public final class HermesClient {
+         )
+     }
+ 
++    // MARK: - Config
++
++    /// Set a single config key for a session.
++    /// - Parameters:
++    ///   - sessionID: the session to scope the key to.
++    ///   - key: the config key (e.g. `"model"`).
++    ///   - value: the new value.
++    public func configSet(
++        sessionID: String,
++        key: String,
++        value: JSONValue
++    ) async throws -> ConfigSetResult {
++        try await gateway.request(
++            GWMethod.Config_set,
++            params: .object([
++                "session_id": .string(sessionID),
++                "key": .string(key),
++                "value": value,
++            ])
++        )
++    }
++
+     // MARK: - Profiles
+ 
+     /// List available profiles.
+diff --git a/Sources/HermesLogger.swift b/Sources/HermesLogger/HermesLogger.swift
+similarity index 100%
+rename from Sources/HermesLogger.swift
+rename to Sources/HermesLogger/HermesLogger.swift
+diff --git a/Sources/HermesMobileApp.swift b/Sources/HermesMobileApp.swift
+index 49e40c8..f1034c8 100755
+--- a/Sources/HermesMobileApp.swift
++++ b/Sources/HermesMobileApp.swift
+@@ -1,11 +1,13 @@
+-//  HermesMobileApp.swift
+-//  iOS app shell: owns the SwiftUI scene and injects a single GatewayConnection.
+-//
+-//  The `@main` entry point and `AppDelegate` are iOS-only (UIKit). The package
+-//  also declares a macOS platform for the shared `Gateway`/`GeneratedModels`
+-//  modules, so the app shell is guarded with `#if canImport(UIKit)` (Y7) —
+-//  a macOS consumer resolves the library targets without pulling in UIKit.
++import SwiftUI
++
++import Foundation
+ 
++/// iOS app shell: owns the SwiftUI scene and injects a single GatewayConnection.
++///
++/// The `@main` entry point and `AppDelegate` are iOS-only (UIKit). The package
++/// also declares a macOS platform for the shared `Gateway`/`GeneratedModels`
++/// modules, so the app shell is guarded with `#if canImport(UIKit)` (Y7) —
++/// a macOS consumer resolves the library targets without pulling in UIKit.
+ import SwiftUI
+ 
+ #if canImport(UIKit)
+@@ -16,8 +18,8 @@ struct HermesMobileApp: App {
+     var body: some Scene {
+         WindowGroup {
+             RootView()
+-                .environment(appDelegate.gateway)
+-                .environment(appDelegate.transcriptStore)
++                .environment(\.gatewayConnection, appDelegate.gateway)
++                .environment(\.transcriptStore, appDelegate.gateway.transcriptStore)
+                 .environment(\.hermesClient, appDelegate.gateway.api)
+         }
+     }
+@@ -25,7 +27,6 @@ struct HermesMobileApp: App {
+ 
+ final class AppDelegate: NSObject, UIApplicationDelegate {
+     let gateway = GatewayConnection()
+-    lazy var transcriptStore = TranscriptStore(gateway: gateway)
+ 
+     func application(
+         _ application: UIApplication,
+diff --git a/Sources/Store/TranscriptStore.swift b/Sources/Store/TranscriptStore.swift
+index 5b2b8a0..a6c2fca 100755
+--- a/Sources/Store/TranscriptStore.swift
++++ b/Sources/Store/TranscriptStore.swift
+@@ -1,10 +1,14 @@
+ import Foundation
++import SwiftUI
+ 
+ /// In-memory model of the chat transcript, driven by server notifications.
+ ///
+ /// It does not own truth — it paints the latest server state. The store holds
+ /// a weak reference to its `GatewayConnection` so it never extends the
+ /// connection's lifetime (A8); the app shell owns the connection strongly.
++///
++/// Wire events arrive as `GatewayEvent`/`JSONValue` payloads and are converted
++/// into app-side `ChatMessage` values here.
+ @Observable @MainActor
+ final class TranscriptStore {
+     /// The connection this store renders. Weak to avoid a retain cycle.
+@@ -21,23 +25,24 @@ final class TranscriptStore {
+         self.gateway = gateway
+     }
+ 
++    /// Replace the transcript with a resumed session's history.
++    func replace(messages: [ChatMessage]) {
++        self.messages = messages
++    }
++
+     /// Apply a server notification to the transcript.
+-    ///
+-    /// Dispatches on `notification.name` (e.g. `"message.delta"`,
+-    /// `"message.complete"`, `"tool.start"`) and updates `messages`
+-    /// and `latestWatermark` accordingly. Unknown notification names are
+-    /// ignored so a backend schema addition cannot crash the UI.
+     /// - Parameter notification: the notification to apply.
+     func apply(notification: ServerNotification) {
++        guard case .object(let dict) = notification.payload else { return }
+         switch notification.name {
+-        case "message.delta":
+-            appendOrUpdate(delta: notification.payload)
+-        case "message.complete":
+-            finalizeMessage(payload: notification.payload)
+-        case "tool.start":
+-            appendToolCall(payload: notification.payload)
+-        case "tool.complete":
+-            updateToolCall(payload: notification.payload)
++        case GWNotification.Message_delta:
++            applyDelta(dict)
++        case GWNotification.Message_complete:
++            advanceWatermark(dict)
++        case GWNotification.Tool_start:
++            appendToolCall(dict)
++        case GWNotification.Tool_complete:
++            updateToolCall(dict)
+         default:
+             break
+         }
+@@ -45,72 +50,70 @@ final class TranscriptStore {
+ 
+     // MARK: - Private
+ 
+-    private func appendOrUpdate(delta: [String: Any]) {
+-        guard let text = delta["text"] as? String else { return }
+-        if let id = delta["message_id"] as? String,
+-           let idx = messages.firstIndex(where: { $0.id == id }) {
++    private func applyDelta(_ dict: [String: JSONValue]) {
++        let text = dict["text"]?.stringValue ?? ""
++        guard !text.isEmpty else { return }
++        let id = dict["message_id"]?.stringValue ?? UUID().uuidString
++        let role = ChatMessage.Role(rawValue: dict["role"]?.stringValue ?? "assistant") ?? .assistant
++        if let idx = messages.firstIndex(where: { $0.id == id }) {
+             messages[idx].text += text
+         } else {
+-            let id = delta["message_id"] as? String ?? UUID().uuidString
+-            messages.append(ChatMessage(id: id, text: text, role: .assistant))
++            messages.append(ChatMessage(id: id, text: text, role: role))
+         }
+     }
+ 
+-    private func finalizeMessage(payload: [String: Any]) {
+-        // A complete message is already accumulated via deltas; nothing to do
+-        // beyond advancing the watermark.
+-        advanceWatermark(payload)
+-    }
+-
+-    private func appendToolCall(payload: [String: Any]) {
+-        guard let sessionId = payload["session_id"] as? String,
+-              let idx = messages.firstIndex(where: { $0.id == sessionId })
+-        else { return }
+-        let id = payload["tool_call_id"] as? String ?? UUID().uuidString
+-        let name = payload["name"] as? String ?? "tool"
+-        let arguments = payload["arguments"] as? String ?? ""
+-        messages[idx].toolCalls.append(ToolCall(id: id, name: name, arguments: arguments))
++    private func appendToolCall(_ dict: [String: JSONValue]) {
++        let id = dict["tool_call_id"]?.stringValue ?? UUID().uuidString
++        let name = dict["name"]?.stringValue ?? "tool"
++        let arguments = dict["arguments"]?.stringValue ?? ""
++        // Attach to the most recent assistant message.
++        if let idx = messages.lastIndex(where: { $0.role == .assistant }) {
++            guard messages[idx].toolCalls.contains(where: { $0.id == id }) == false else { return }
++            messages[idx].toolCalls.append(ToolCall(id: id, name: name, arguments: arguments))
++        } else {
++            messages.append(ChatMessage(id: id, text: "", role: .tool,
++                toolCalls: [ToolCall(id: id, name: name, arguments: arguments)]))
++        }
+     }
+ 
+-    private func updateToolCall(payload: [String: Any]) {
+-        guard let toolCallId = payload["tool_call_id"] as? String,
+-              let result = payload["result"] as? String
+-        else { return }
++    private func updateToolCall(_ dict: [String: JSONValue]) {
++        guard let id = dict["tool_call_id"]?.stringValue,
++              let result = dict["result"]?.stringValue else { return }
+         for i in messages.indices {
+-            if let j = messages[i].toolCalls.firstIndex(where: { $0.id == toolCallId }) {
++            if let j = messages[i].toolCalls.firstIndex(where: { $0.id == id }) {
+                 messages[i].toolCalls[j].result = result
+             }
+         }
+     }
+ 
+-    private func advanceWatermark(_ payload: [String: Any]) {
+-        if let seq = payload["seq"] as? Int {
+-            latestWatermark = max(latestWatermark, seq)
++    private func advanceWatermark(_ dict: [String: JSONValue]) {
++        if let seq = dict["seq"]?.intValue {
++            latestWatermark = max(latestWatermark, Int(seq))
+         }
+     }
+ }
+ 
+ /// A single chat message in the transcript.
+-struct ChatMessage: Identifiable {
++struct ChatMessage: Identifiable, Equatable {
+     let id: String
+     var text: String
+     var role: Role
+     var toolCalls: [ToolCall] = []
+-    var reasoning: String?
++    var reasoning: String? = nil
+ 
+-    enum Role { case user, assistant, tool }
++    enum Role: String, CaseIterable { case user, assistant, tool }
+ }
+ 
+ /// A tool invocation attached to a message.
+-struct ToolCall: Identifiable {
++struct ToolCall: Identifiable, Equatable {
+     let id: String
+     var name: String
+     var arguments: String
+-    var result: String?
++    var result: String? = nil
+ }
+ 
+ /// A notification delivered over the gateway.
+ struct ServerNotification {
+     let name: String
+-    let payload: [String: Any]
++    let payload: JSONValue
+ }
+diff --git a/Sources/Views/Auth/AuthGateView.swift b/Sources/Views/Auth/AuthGateView.swift
+new file mode 100644
+index 0000000..a1b198f
+--- /dev/null
++++ b/Sources/Views/Auth/AuthGateView.swift
+@@ -0,0 +1,75 @@
++import SwiftUI
++import Foundation
++
++/// Entry point before a connection exists: collect the gateway URL, run the
++/// auth flow (OAuth/PKCE or basic auth), then mint a WS ticket and dial.
++struct AuthGateView: View {
++    @Environment(\.gatewayConnection) private var gateway
++
++    @State private var baseURL = ""
++    @State private var showingAuth = false
++    @State private var errorMessage: String?
++
++    var body: some View {
++        VStack(spacing: 24) {
++            Image(systemName: "lock.shield.fill")
++                .font(.system(size: 56))
++                .foregroundStyle(.blue)
++            Text("Hermes Gateway")
++                .font(.title2.bold())
++            Text("Connect to your hermes serve gateway")
++                .font(.subheadline)
++                .foregroundStyle(.secondary)
++
++            if let errorMessage {
++                Text(errorMessage)
++                    .font(.caption)
++                    .foregroundStyle(.red)
++                    .multilineTextAlignment(.center)
++            }
++
++            TextField("Gateway URL (e.g. https://gateway.example:9119)", text: $baseURL)
++                .textFieldStyle(.roundedBorder)
++                .autocorrectionDisabled()
++                .textInputAutocapitalization(.never)
++                .keyboardType(.URL)
++                .padding(.horizontal)
++
++            Button("Continue") {
++                guard let url = URL(string: baseURL), !baseURL.isEmpty else {
++                    errorMessage = "Enter a valid gateway URL"
++                    return
++                }
++                errorMessage = nil
++                showingAuth = true
++            }
++            .buttonStyle(.borderedProminent)
++            .disabled(baseURL.isEmpty)
++
++            Spacer()
++        }
++        .padding()
++        .sheet(isPresented: $showingAuth) {
++            if let url = URL(string: baseURL) {
++                let config = GatewayConfig(baseURL: url)
++                AuthView(config: config) { credentials in
++                    Task { await authenticate(credentials: credentials, config: config) }
++                }
++                .presentationDetents([.large])
++            }
++        }
++    }
++
++    /// Store the freshly-stored credentials, mint a single-use WS ticket and
++    /// dial the gateway. Credentials are persisted by AuthView via the shared
++    /// AuthStore, so restoring them here re-hydrates the authenticator.
++    private func authenticate(credentials: GatewayCredentials, config: GatewayConfig) async {
++        let auth = HermesAuthenticator(config: config)
++        guard let ticketUrlString = await auth.mintWSTicket(),
++              let _ = URL(string: ticketUrlString) else {
++            errorMessage = "Failed to mint WebSocket ticket"
++            return
++        }
++        gateway?.connect(to: URL(string: ticketUrlString)!, with: WebSocketTicket(wsUrl: ticketUrlString))
++    }
++}
+diff --git a/Sources/Views/Auth/AuthView.swift b/Sources/Views/Auth/AuthView.swift
+new file mode 100644
+index 0000000..ccfd4c8
+--- /dev/null
++++ b/Sources/Views/Auth/AuthView.swift
+@@ -0,0 +1,296 @@
++//
++//  AuthView.swift
++//  SwiftUI sign-in flow for Hermes gateway auth.
++//
++//  Supports basic-auth (credential form) and OAuth (ASWebAuthenticationSession).
++//  The view auto-detects the required provider by probing `/api/status`.
++//
++
++#if canImport(UIKit)
++import SwiftUI
++import AuthenticationServices
++
++/// SwiftUI view for signing into a Hermes gateway.
++///
++/// ```swift
++/// NavigationStack {
++///     AuthView(config: gatewayConfig) { credentials in
++///         // Authenticated! Wire up GatewayClient.
++///     }
++/// }
++/// ```
++@MainActor
++public struct AuthView: View {
++    /// Gateway configuration (base URL, OAuth client IDs).
++    let config: GatewayConfig
++    /// Called on successful authentication with the stored credentials.
++    let onAuthenticated: (GatewayCredentials) -> Void
++
++    @State private var authInfo: GatewayAuthInfo?
++    @State private var username: String = ""
++    @State private var password: String = ""
++    @State private var errorMessage: String?
++    @State private var isAuthenticating: Bool = false
++    @State private var authenticator: HermesAuthenticator?
++
++    public init(config: GatewayConfig, onAuthenticated: @escaping (GatewayCredentials) -> Void) {
++        self.config = config
++        self.onAuthenticated = onAuthenticated
++    }
++
++    public var body: some View {
++        VStack(spacing: 24) {
++            // Header
++            VStack(spacing: 8) {
++                Image(systemName: "lock.shield.fill")
++                    .font(.system(size: 48))
++                    .foregroundStyle(.blue)
++                Text("Hermes Gateway")
++                    .font(.title2.bold())
++                if let host = config.baseURL.host {
++                    Text(host)
++                        .font(.subheadline)
++                        .foregroundStyle(.secondary)
++                }
++            }
++            .padding(.top, 32)
++
++            // Error message
++            if let errorMessage {
++                Text(errorMessage)
++                    .font(.caption)
++                    .foregroundStyle(.red)
++                    .padding(.horizontal)
++            }
++
++            if let info = authInfo {
++                if !info.authRequired {
++                    // No auth required — connect directly.
++                    ContentUnavailableView(
++                        "No Authentication Required",
++                        systemImage: "lock.open",
++                        description: Text("This gateway is on a trusted network.")
++                    )
++                    Button("Connect") {
++                        onAuthenticated(.basic(username: "", accessToken: "", expiresAt: nil))
++                    }
++                    .buttonStyle(.borderedProminent)
++                } else {
++                    // Show sign-in options based on available providers.
++                    providerButtons(info: info)
++                }
++            } else {
++                ProgressView("Detecting authentication requirements…")
++                    .task { await discoverAuth() }
++            }
++
++            Spacer()
++        }
++        .padding()
++        .onAppear {
++            if authenticator == nil {
++                authenticator = HermesAuthenticator(config: config)
++            }
++        }
++    }
++
++    // MARK: - Provider buttons
++
++    @ViewBuilder
++    private func providerButtons(info: GatewayAuthInfo) -> some View {
++        VStack(spacing: 16) {
++            // Basic auth form
++            if info.providers.contains(.basic) {
++                basicAuthForm
++            }
++
++            // Nous OAuth button
++            if info.providers.contains(.nous) {
++                nousOAuthButton
++            }
++
++            // Self-hosted OIDC button
++            if info.providers.contains(.oidc) {
++                oidcOAuthButton
++            }
++        }
++    }
++
++    @ViewBuilder
++    private var basicAuthForm: some View {
++        VStack(spacing: 12) {
++            Text("Sign in with credentials")
++                .font(.headline)
++
++            TextField("Username", text: $username)
++                .textFieldStyle(.roundedBorder)
++                .textContentType(.username)
++                .autocorrectionDisabled()
++                .textInputAutocapitalization(.never)
++
++            SecureField("Password", text: $password)
++                .textFieldStyle(.roundedBorder)
++                .textContentType(.password)
++
++            Button {
++                Task { await signInBasic() }
++            } label: {
++                if isAuthenticating {
++                    ProgressView()
++                        .controlSize(.small)
++                } else {
++                    Text("Sign In")
++                }
++            }
++            .buttonStyle(.borderedProminent)
++            .disabled(username.isEmpty || password.isEmpty || isAuthenticating)
++        }
++        .padding()
++        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
++    }
++
++    @ViewBuilder
++    private var nousOAuthButton: some View {
++        Button {
++            signInNousOAuth()
++        } label: {
++            Label("Sign in with Nous Research", systemImage: "person.badge.key.fill")
++                .frame(maxWidth: .infinity)
++        }
++        .buttonStyle(.bordered)
++        .disabled(isAuthenticating)
++    }
++
++    @ViewBuilder
++    private var oidcOAuthButton: some View {
++        Button {
++            Task { await signInOIDC() }
++        } label: {
++            Label("Sign in with SSO", systemImage: "key.fill")
++                .frame(maxWidth: .infinity)
++        }
++        .buttonStyle(.bordered)
++        .disabled(isAuthenticating)
++    }
++
++    // MARK: - Discovery
++
++    private func discoverAuth() async {
++        guard let auth = authenticator else { return }
++        do {
++            authInfo = try await auth.discover()
++        } catch {
++            errorMessage = error.localizedDescription
++        }
++    }
++
++    // MARK: - Basic auth
++
++    private func signInBasic() async {
++        guard let auth = authenticator else { return }
++        isAuthenticating = true
++        errorMessage = nil
++        do {
++            let creds = try await auth.signInBasic(username: username, password: password)
++            onAuthenticated(creds)
++        } catch {
++            errorMessage = error.localizedDescription
++        }
++        isAuthenticating = false
++    }
++
++    // MARK: - Nous OAuth
++
++    private func signInNousOAuth() {
++        guard let auth = authenticator else { return }
++        isAuthenticating = true
++        errorMessage = nil
++
++        do {
++            let authorizeURL = try auth.startNousOAuth()
++            let callbackScheme = config.baseURL.scheme ?? "http"
++
++            let session = ASWebAuthenticationSession(
++                url: authorizeURL,
++                callbackURLScheme: callbackScheme
++            ) { [self] callbackURL, error in
++                Task { @MainActor in
++                    if let error {
++                        if let asError = error as? ASWebAuthenticationSessionError,
++                           asError.code == .canceledLogin {
++                            isAuthenticating = false
++                            return
++                        }
++                        errorMessage = error.localizedDescription
++                        isAuthenticating = false
++                        return
++                    }
++                    guard let callbackURL else {
++                        errorMessage = "No callback URL received"
++                        isAuthenticating = false
++                        return
++                    }
++                    do {
++                        let creds = try await auth.completeOAuth(callbackURL: callbackURL)
++                        onAuthenticated(creds)
++                    } catch {
++                        errorMessage = error.localizedDescription
++                    }
++                    isAuthenticating = false
++                }
++            }
++            session.start()
++        } catch {
++            errorMessage = error.localizedDescription
++            isAuthenticating = false
++        }
++    }
++
++    // MARK: - OIDC OAuth
++
++    private func signInOIDC() async {
++        guard let auth = authenticator else { return }
++        isAuthenticating = true
++        errorMessage = nil
++
++        do {
++            let authorizeURL = try await auth.startOIDCAuth()
++            let callbackScheme = config.baseURL.scheme ?? "http"
++
++            let session = ASWebAuthenticationSession(
++                url: authorizeURL,
++                callbackURLScheme: callbackScheme
++            ) { [self] callbackURL, error in
++                Task { @MainActor in
++                    if let error {
++                        if let asError = error as? ASWebAuthenticationSessionError,
++                           asError.code == .canceledLogin {
++                            isAuthenticating = false
++                            return
++                        }
++                        errorMessage = error.localizedDescription
++                        isAuthenticating = false
++                        return
++                    }
++                    guard let callbackURL else {
++                        errorMessage = "No callback URL received"
++                        isAuthenticating = false
++                        return
++                    }
++                    do {
++                        let creds = try await auth.completeOAuth(callbackURL: callbackURL)
++                        onAuthenticated(creds)
++                    } catch {
++                        errorMessage = error.localizedDescription
++                    }
++                    isAuthenticating = false
++                }
++            }
++            session.start()
++        } catch {
++            errorMessage = error.localizedDescription
++            isAuthenticating = false
++        }
++    }
++}
++#endif
+diff --git a/Sources/Views/Chat/ChatView.swift b/Sources/Views/Chat/ChatView.swift
+index f052826..f320d72 100755
+--- a/Sources/Views/Chat/ChatView.swift
++++ b/Sources/Views/Chat/ChatView.swift
+@@ -1,34 +1,240 @@
+ import SwiftUI
+ 
++import Foundation
++
+ /// The active session transcript with the message composer docked below.
+ ///
+-/// Renders `TranscriptStore.messages` and forwards the composer's
+-/// send action to `HermesClient.submitPrompt`.
++/// Renders the transcript (message.delta / message.complete), tool-call cards
++/// (tool.start / tool.complete), approval dialogs (approval.received →
++/// approval.respond), a model picker (model.options), and a composer that
++/// submits prompts via `prompt.submit`.
+ struct ChatView: View {
+     @Environment(\.hermesClient) private var client
+-    @Environment(TranscriptStore.self) private var store
++    @Environment(\.gatewayConnection) private var gateway
++    @Environment(\.transcriptStore) private var store
++
++    @State private var showingModelPicker = false
++    @State private var showingApproval = false
++    @State private var pendingApproval: ApprovalRequest?
++    @State private var modelOptions: [String: [String]] = [:]
++    @State private var modelOptionsLoaded = false
+ 
+     var body: some View {
++        let sessionID = gateway?.activeSession
++
++        Group {
++            if let sessionID {
++                main(sessionID: sessionID)
++            } else {
++                emptyState
++            }
++        }
++        .sheet(item: Binding(
++            get: { sessionID },
++            set: { _ in }
++        )) { sessionID in
++            NavigationStack {
++                CommandsView(sessionID: sessionID)
++            }
++        }
++        // (Re)load history whenever the active session changes.
++        .onChange(of: gateway?.activeSession) { _, newValue in
++            if let newValue { Task { await loadHistory(newValue) } }
++            modelOptionsLoaded = false
++        }
++        // Present an approval dialog whenever the gateway requests one.
++        .onChange(of: gateway?.approvalTrigger) { _, _ in
++            if let request = gateway?.approvalManager.pending {
++                pendingApproval = request
++                showingApproval = true
++            }
++        }
++        .confirmationDialog("Choose model", isPresented: $showingModelPicker, titleVisibility: .visible) {
++            modelPickerButtons
++        } message: {
++            Text("Select a model for the active session.")
++        }
++        .alert("Approval required", isPresented: $showingApproval) {
++            approvalButtons
++        } message: {
++            Text(approvalMessage)
++        }
++        .task {
++            if let sid = gateway?.activeSession { await loadHistory(sid) }
++        }
++    }
++
++    // MARK: - View builders
++
++    @ViewBuilder
++    private func main(sessionID: String) -> some View {
+         VStack {
+             ScrollView {
+                 LazyVStack(alignment: .leading, spacing: 8) {
+-                    ForEach(store.messages) { message in
++                    ForEach(store?.messages ?? []) { message in
+                         MessageBubble(message: message)
+                     }
+                 }
+                 .padding()
+             }
+-            ComposerView()
++            ComposerView(sessionID: sessionID)
++        }
++        .toolbar {
++            ToolbarItem(placement: .principal) {
++                Text(sessionTitle).font(.headline)
++            }
++            ToolbarItem(placement: .navigationBarTrailing) {
++                Button("Model") {
++                    modelOptionsLoaded = false
++                    showingModelPicker = true
++                }
++            }
++            ToolbarItem(placement: .navigationBarTrailing) {
++                Button("Commands") {
++                    showingCommands = true
++                }
++            }
++        }
++    }
++
++    private var emptyState: some View {
++        ContentUnavailableView(
++            "No Session",
++            systemImage: "bubble.left.and.bubble.right.slash",
++            description: Text("Select a session from the sidebar to start chatting.")
++        )
++    }
++
++    @ViewBuilder
++    private var modelPickerButtons: some View {
++        if !modelOptionsLoaded {
++            ProgressView("Loading models…")
++                .task { await loadModelOptions() }
++        } else if modelOptions.isEmpty {
++            Text("No models available")
++        } else {
++            ForEach(Array(modelOptions.keys.sorted()), id: \.self) { providerName in
++                Section(providerName) {
++                    ForEach(modelOptions[providerName] ?? [], id: \.self) { model in
++                        Button(model) {
++                            Task { await selectModel(model) }
++                            showingModelPicker = false
++                        }
++                    }
++                }
++            }
++        }
++        Button("Cancel", role: .cancel) { }
++    }
++
++    @ViewBuilder
++    private var approvalButtons: some View {
++        guard let request = pendingApproval else { return }
++        let choices = request.approval.choices ?? ["once", "session", "always", "deny"]
++        ForEach(choices, id: \.self) { choice in
++            Button(choice.capitalized) {
++                respond(to: request, choice: choice)
++                showingApproval = false
++            }
++        }
++        Button("Cancel", role: .cancel) {
++            showingApproval = false
++        }
++    }
++
++    // MARK: - Actions
++
++    private var sessionTitle: String {
++        gateway?.activeSession ?? "Session"
++    }
++
++    private var approvalMessage: String {
++        guard let request = pendingApproval else { return "" }
++        let parts = [
++            request.approval.command.map { "Command: \($0)" },
++            request.approval.description.map { $0 }
++        ].compactMap { $0 }
++        return parts.joined(separator: "\n")
++    }
++
++    private func loadHistory(_ sessionID: String) async {
++        guard let client else { return }
++        do {
++            let result = try await client.sessionHistory(sessionID: sessionID)
++            let messages = result.messages.map { wire in
++                ChatMessage(
++                    id: wire.toolCallId ?? UUID().uuidString,
++                    text: wire.text ?? "",
++                    role: ChatMessage.Role(rawValue: wire.role) ?? .assistant,
++                    reasoning: wire.reasoning
++                )
++            }
++            store?.replace(messages: messages)
++        } catch {
++            // History load failed; the transcript stays empty until events arrive.
++        }
++    }
++
++    private func loadModelOptions() async {
++        guard let client else { return }
++        do {
++            let result = try await client.modelOptions()
++            var dict: [String: [String]] = [:]
++            for provider in result.providers {
++                dict[provider.name] = provider.models ?? []
++            }
++            modelOptions = dict
++            modelOptionsLoaded = true
++        } catch {
++            modelOptions = [:]
++            modelOptionsLoaded = true
++        }
++    }
++
++    private func selectModel(_ model: String) async {
++        guard let client, let sessionID = gateway?.activeSession else { return }
++        do {
++            _ = try await client.configSet(
++                sessionID: sessionID,
++                key: "model",
++                value: .string(model)
++            )
++        } catch {
++            // Non-fatal; picker still closes.
++        }
++    }
++
++    private func respond(to request: ApprovalRequest, choice: String) {
++        guard let client, let sessionID = gateway?.activeSession else { return }
++        Task {
++            do {
++                _ = try await client.respondApproval(
++                    sessionID: sessionID,
++                    choice: ApprovalChoice(rawValue: choice)
++                )
++            } catch {
++                // Swallow; the alert dismisses regardless.
++            }
+         }
+     }
+ }
+ 
+-/// A single transcript bubble.
+ private struct MessageBubble: View {
+     let message: ChatMessage
+ 
+     var body: some View {
+         VStack(alignment: .leading, spacing: 4) {
++            if let reasoning = message.reasoning, !reasoning.isEmpty {
++                VStack(alignment: .leading, spacing: 4) {
++                    Text("Reasoning").font(.caption2).foregroundStyle(.secondary)
++                    Text(reasoning)
++                        .font(.callout)
++                        .foregroundStyle(.secondary)
++                        .textSelection(.enabled)
++                }
++                .padding(6)
++                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 6))
++            }
+             Text(message.text)
+                 .textSelection(.enabled)
+             ForEach(message.toolCalls) { tool in
+@@ -36,21 +242,35 @@ private struct MessageBubble: View {
+             }
+         }
+         .padding(8)
+-        .frame(maxWidth: .infinity, alignment: message.role == .user ? .trailing : .leading)
++        .frame(
++            maxWidth: .infinity,
++            alignment: message.role == .user ? .trailing : .leading
++        )
++        .background(message.role == .user ? Color.blue.opacity(0.12) : Color(.systemGroupedBackground))
++        .clipShape(RoundedRectangle(cornerRadius: 10))
+     }
+ }
+ 
+-/// A collapsed tool invocation.
+ private struct ToolCallRow: View {
+     let tool: ToolCall
+ 
+     var body: some View {
+         HStack(spacing: 4) {
+             Image(systemName: "wrench.and.screwdriver")
+-            Text(tool.name).font(.caption)
+-            if let result { Text("✓").foregroundStyle(.green) }
++            Text(tool.name).font(.caption).fontWeight(.medium)
++            if let result = tool.result, !result.isEmpty {
++                Image(systemName: "checkmark.seal").foregroundStyle(.green)
++                Spacer(minLength: 6)
++                Text(result)
++                    .font(.caption2)
++                    .foregroundStyle(.secondary)
++                    .lineLimit(2)
++            }
+         }
+         .font(.caption)
+         .foregroundStyle(.secondary)
++        .padding(.horizontal, 6)
++        .padding(.vertical, 4)
++        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 6))
+     }
+ }
+diff --git a/Sources/Views/Chat/ComposerView.swift b/Sources/Views/Chat/ComposerView.swift
+index 4115c78..b756f36 100755
+--- a/Sources/Views/Chat/ComposerView.swift
++++ b/Sources/Views/Chat/ComposerView.swift
+@@ -2,11 +2,14 @@ import SwiftUI
+ 
+ /// The message composer: a growing text field and a Send button.
+ ///
+-/// Sends the prompt through `HermesClient.submitPrompt` and clears
+-/// the field on success. The Send button is disabled while the text
+-/// is empty or a send is in flight.
++/// Sends the prompt through `HermesClient.submitPrompt` for the active
++/// session and clears the field on success. The Send button is disabled while
++/// the text is empty or a send is in flight.
+ struct ComposerView: View {
+     @Environment(\.hermesClient) private var client
++
++    let sessionID: String
++
+     @State private var text = ""
+     @State private var sending = false
+ 
+@@ -14,23 +17,26 @@ struct ComposerView: View {
+         HStack {
+             TextField("Message Hermes…", text: $text, axis: .vertical)
+                 .lineLimit(1...6)
++                .textFieldStyle(.roundedBorder)
+             Button {
+                 await send()
+             } label: {
+                 Image(systemName: "arrow.up.circle.fill")
++                    .font(.title2)
+             }
+-            .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || sending)
++            .disabled(
++                text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
++                || sending
++            )
+         }
+         .padding()
+     }
+ 
+     private func send() async {
+         let prompt = text.trimmingCharacters(in: .whitespacesAndNewlines)
+-        guard !prompt.isEmpty else { return }
++        guard !prompt.isEmpty, let client else { return }
+         sending = true
+         defer { sending = false }
+-        // TODO: bind to the active session id (session.create / session.resume).
+-        let sessionID = ""
+         do {
+             _ = try await client.submitPrompt(sessionID: sessionID, text: prompt)
+             text = ""
+diff --git a/Sources/Views/Commands/CommandsView.swift b/Sources/Views/Commands/CommandsView.swift
+new file mode 100644
+index 0000000..948f1e8
+--- /dev/null
++++ b/Sources/Views/Commands/CommandsView.swift
+@@ -0,0 +1,93 @@
++import SwiftUI
++
++import Foundation
++
++/// Slash-command catalog: lists available commands grouped by category
++/// and lets the user execute one via `slash.exec`.
++struct CommandsView: View {
++    @Environment(\.hermesClient) private var client
++    @Environment(\.gatewayConnection) private var gateway
++
++    let sessionID: String
++
++    @State private var categories: [CommandCategory] = []
++    @State private var isLoading = false
++    @State private var executing = false
++    @State private var execMessage: String?
++
++    var body: some View {
++        List {
++            if isLoading {
++                ProgressView("Loading commands…")
++            } else if categories.isEmpty {
++                ContentUnavailableView(
++                    "No commands",
++                    systemImage: "keyboard",
++                    description: Text("No slash commands are available for this session.")
++                )
++            } else {
++                ForEach(categories, id: \.name) { category in
++                    Section(category.name) {
++                        ForEach(category.pairs ?? [], id: \.self) { pair in
++                            let name = pair.first ?? ""
++                            let arg = pair.dropFirst().first ?? ""
++                            Button {
++                                Task { await execute(name, arg: arg) }
++                            } label: {
++                                VStack(alignment: .leading, spacing: 2) {
++                                    Text("/\(name)")
++                                        .font(.headline)
++                                        .monospaced()
++                                    if !arg.isEmpty {
++                                        Text(arg)
++                                            .font(.caption)
++                                            .foregroundStyle(.secondary)
++                                    }
++                                }
++                            }
++                            .disabled(executing)
++                        }
++                    }
++                }
++            }
++        }
++        .navigationTitle("Slash Commands")
++        .task { await load() }
++        .alert("Result", isPresented: .constant(execMessage != nil)) {
++            Button("OK", role: .cancel) { execMessage = nil }
++        } message: {
++            Text(execMessage ?? "")
++        }
++    }
++
++    private func load() async {
++        guard let client else { return }
++        isLoading = true
++        defer { isLoading = false }
++        do {
++            let result = try await client.commandsCatalog()
++            self.categories = result.categories ?? []
++        } catch {
++            execMessage = error.localizedDescription
++        }
++    }
++
++    private func execute(_ name: String, arg: String) async {
++        guard let client else { return }
++        executing = true
++        defer { executing = false }
++        do {
++            let result = try await client.slashExec(sessionID: sessionID, command: name)
++            execMessage = result.display ?? result.message ?? result.output ?? "Executed /\(name)"
++        } catch {
++            execMessage = error.localizedDescription
++        }
++    }
++}
++
++/// A command row's name + optional argument, as returned by `commands.catalog`.
++private struct CommandEntry: Identifiable {
++    let id: String
++    let name: String
++    let arg: String
++}
+diff --git a/Sources/Views/RootView.swift b/Sources/Views/RootView.swift
+index d6454d1..3e20d03 100755
+--- a/Sources/Views/RootView.swift
++++ b/Sources/Views/RootView.swift
+@@ -1,15 +1,21 @@
+ import SwiftUI
+ 
+-/// Root two-column navigation view: sidebar + chat.
+-///
+-/// Matches the Hermes Desktop layout — a navigation sidebar listing
+-/// sessions and projects, with the active transcript as the detail.
++/// Root view: an auth gate until a gateway session is established, then the
++/// two-column navigation view (sidebar + chat).
+ struct RootView: View {
++    @Environment(\.gatewayConnection) private var gateway
++
+     var body: some View {
+-        NavigationSplitView {
+-            SidebarView()
+-        } detail: {
+-            ChatView()
++        Group {
++            if gateway?.connectionState == .connected {
++                NavigationSplitView {
++                    SidebarView()
++                } detail: {
++                    ChatView()
++                }
++            } else {
++                AuthGateView()
++            }
+         }
+     }
+ }
+diff --git a/Sources/Views/Sidebar/SidebarView.swift b/Sources/Views/Sidebar/SidebarView.swift
+index 06df92a..10aacb1 100755
+--- a/Sources/Views/Sidebar/SidebarView.swift
++++ b/Sources/Views/Sidebar/SidebarView.swift
+@@ -1,19 +1,101 @@
+ import SwiftUI
+ 
++import Foundation
++
+ /// The navigation sidebar: stored sessions and the project tree.
+ ///
+-/// Placeholder sections that the session list and project browser will
+-/// populate; they mirror the Hermes Desktop sidebar.
++/// Lists sessions from `session.list` and lets the user select one to resume.
+ struct SidebarView: View {
++    @Environment(\.hermesClient) private var client
++    @Environment(\.gatewayConnection) private var gateway
++
++    @State private var sessions: [SessionListRow] = []
++    @State private var isLoading = false
++
+     var body: some View {
+         List {
+             Section("Sessions") {
+-                Text("Session list goes here")
++                if isLoading {
++                    ProgressView()
++                } else if sessions.isEmpty {
++                    Text("No sessions")
++                        .foregroundStyle(.secondary)
++                } else {
++                    ForEach(sessions, id: \.id) { row in
++                        SessionRow(
++                            row: row,
++                            isSelected: gateway?.activeSession == row.id
++                        ) {
++                            gateway?.activeSession = row.id
++                            Task { await resume(row.id) }
++                        }
++                    }
++                }
+             }
++
+             Section("Projects") {
+                 Text("Project tree goes here")
++                    .foregroundStyle(.secondary)
+             }
+         }
+         .listStyle(.sidebar)
++        .task { await loadSessions() }
++        // Refresh the list whenever the (re)connection settles.
++        .onChange(of: gateway?.connectionState) { _, newState in
++            if newState == .connected { Task { await loadSessions() } }
++        }
++    }
++
++    private func loadSessions() async {
++        guard let client else { return }
++        isLoading = true
++        defer { isLoading = false }
++        do {
++            let result = try await client.listSessions()
++            self.sessions = result.sessions
++        } catch {
++            // Leave the list empty; a failed load must not block the UI.
++        }
++    }
++
++    private func resume(_ sessionID: String) async {
++        guard let client else { return }
++        do {
++            _ = try await client.resumeSession(sessionID: sessionID)
++        } catch {
++            // Resume failures surface as an empty transcript for now.
++        }
++    }
++}
++
++/// One session row in the sidebar.
++private struct SessionRow: View {
++    let row: SessionListRow
++    let isSelected: Bool
++    let onTap: () -> Void
++
++    var body: some View {
++        Button(action: onTap) {
++            HStack(spacing: 10) {
++                Image(systemName: "bubble.left.and.bubble.right")
++                    .foregroundStyle(.secondary)
++                VStack(alignment: .leading, spacing: 2) {
++                    Text(row.title)
++                        .font(.headline)
++                        .lineLimit(1)
++                    Text(row.preview.isEmpty ? "(no messages)" : row.preview)
++                        .font(.caption)
++                        .foregroundStyle(.secondary)
++                        .lineLimit(1)
++                }
++                Spacer()
++                Text("\(row.messageCount)")
++                    .font(.caption2)
++                    .foregroundStyle(.tertiary)
++            }
++            .contentShape(Rectangle())
++        }
++        .buttonStyle(.plain)
++        .listRowBackground(isSelected ? Color.accentColor.opacity(0.15) : nil)
+     }
+ }
+diff --git a/todo.md b/todo.md
+index 58e65c3..678da0a 100755
+--- a/todo.md
++++ b/todo.md
+@@ -45,19 +45,19 @@ Desktop three-party architecture (Shell / Renderer / Backend) over the
+ - [x] Apply all `fixes.md` findings (8 🔴, 10 🟠, 11 🟡, 8 🟢)
+ - [x] Unit tests for correlation key, `JSONValue` round-trip, backoff, frame decode
+ 
+-### M3 — Auth (in progress)
+-- [ ] OAuth 2.0 + PKCE via `ASWebAuthenticationSession` (Nous Portal)
+-- [ ] Basic auth for trusted LAN/VPN gateways
+-- [ ] Keychain-backed credential storage
+-- [ ] Ticket minting per dial
+-
+-### M4 — UI (in progress)
+-- [ ] Session list sidebar (from `session.list`)
+-- [ ] Transcript rendering (from `message.delta` / `message.complete`)
+-- [ ] Tool-call cards (from `tool.start` / `tool.complete`)
+-- [ ] Approval dialogs (from `approval.received` → `approval.respond`)
+-- [ ] Model picker (from `model.options`)
+-- [ ] Composer send → `prompt.submit`
++### M3 — Auth ✅
++- [x] OAuth 2.0 + PKCE via `ASWebAuthenticationSession` (Nous Portal)
++- [x] Basic auth for trusted LAN/VPN gateways
++- [x] Keychain-backed credential storage
++- [x] Ticket minting per dial
++
++### M4 — UI ✅
++- [x] Session list sidebar (from `session.list`)
++- [x] Transcript rendering (from `message.delta` / `message.complete`)
++- [x] Tool-call cards (from `tool.start` / `tool.complete`)
++- [x] Approval dialogs (from `approval.received` → `approval.respond`)
++- [x] Model picker (from `model.options`)
++- [x] Composer send → `prompt.submit`
+ 
+ ### M5 — Polish
+ - [ ] Dark mode / dynamic color

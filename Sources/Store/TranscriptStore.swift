@@ -16,6 +16,11 @@ final class TranscriptStore {
 
     /// The transcript, oldest first.
     var messages: [ChatMessage] = []
+    /// Index from message id → array position, kept in sync with `messages`.
+    private var messageIndex: [String: Int] = [:]
+    /// Index from tool call id → (message position, tool-call position) for
+    /// O(1) lookups on tool.start / tool.complete.
+    private var toolCallIndex: [String: (messageIdx: Int, toolIdx: Int)] = [:]
     /// The `seq` watermark of the last applied event.
     var latestWatermark: Int = 0
 
@@ -28,6 +33,13 @@ final class TranscriptStore {
     /// Replace the transcript with a resumed session's history.
     func replace(messages: [ChatMessage]) {
         self.messages = messages
+        messageIndex = Dictionary(uniqueKeysWithValues: messages.enumerated().map { ($1.id, $0) })
+        toolCallIndex = [:]
+        for (msgIdx, msg) in messages.enumerated() {
+            for (toolIdx, tool) in msg.toolCalls.enumerated() {
+                toolCallIndex[tool.id] = (msgIdx, toolIdx)
+            }
+        }
     }
 
     /// Apply a server notification to the transcript.
@@ -55,35 +67,38 @@ final class TranscriptStore {
         guard !text.isEmpty else { return }
         let id = dict["message_id"]?.stringValue ?? UUID().uuidString
         let role = ChatMessage.Role(rawValue: dict["role"]?.stringValue ?? "assistant") ?? .assistant
-        if let idx = messages.firstIndex(where: { $0.id == id }) {
+        if let idx = messageIndex[id] {
             messages[idx].text += text
         } else {
             messages.append(ChatMessage(id: id, text: text, role: role))
+            messageIndex[id] = messages.count - 1
         }
     }
 
     private func appendToolCall(_ dict: [String: JSONValue]) {
         let id = dict["tool_call_id"]?.stringValue ?? UUID().uuidString
+        // Skip if we already have this tool call.
+        guard toolCallIndex[id] == nil else { return }
         let name = dict["name"]?.stringValue ?? "tool"
         let arguments = dict["arguments"]?.stringValue ?? ""
         // Attach to the most recent assistant message.
         if let idx = messages.lastIndex(where: { $0.role == .assistant }) {
-            guard messages[idx].toolCalls.contains(where: { $0.id == id }) == false else { return }
+            let toolIdx = messages[idx].toolCalls.count
             messages[idx].toolCalls.append(ToolCall(id: id, name: name, arguments: arguments))
+            toolCallIndex[id] = (idx, toolIdx)
         } else {
+            let msgIdx = messages.count
             messages.append(ChatMessage(id: id, text: "", role: .tool,
                 toolCalls: [ToolCall(id: id, name: name, arguments: arguments)]))
+            toolCallIndex[id] = (msgIdx, 0)
         }
     }
 
     private func updateToolCall(_ dict: [String: JSONValue]) {
         guard let id = dict["tool_call_id"]?.stringValue,
               let result = dict["result"]?.stringValue else { return }
-        for i in messages.indices {
-            if let j = messages[i].toolCalls.firstIndex(where: { $0.id == id }) {
-                messages[i].toolCalls[j].result = result
-            }
-        }
+        guard let (msgIdx, toolIdx) = toolCallIndex[id] else { return }
+        messages[msgIdx].toolCalls[toolIdx].result = result
     }
 
     private func advanceWatermark(_ dict: [String: JSONValue]) {

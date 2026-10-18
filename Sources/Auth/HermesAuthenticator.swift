@@ -363,21 +363,20 @@ public final class HermesAuthenticator {
                   httpResponse.statusCode == 200 else {
                 return nil
             }
-            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let ticket = json["ticket"] as? String else {
-                // The server may also return a full wsUrl.
-                if let wsUrl = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["url"] as? String {
-                    return wsUrl
-                }
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                 return nil
             }
-            // Build the full WS URL from the ticket.
-            // The dashboard's WS endpoint is at /api/ws.
-            var wsComponents = URLComponents(url: config.baseURL, resolvingAgainstBaseURL: true)!
-            wsComponents.scheme = (wsComponents.scheme == "https") ? "wss" : "ws"
-            wsComponents.path = "/api/ws"
-            wsComponents.queryItems = [.init(name: "ticket", value: ticket)]
-            return wsComponents.string
+            if let ticket = json["ticket"] as? String {
+                // Build the full WS URL from the ticket.
+                // The dashboard's WS endpoint is at /api/ws.
+                var wsComponents = URLComponents(url: config.baseURL, resolvingAgainstBaseURL: true)!
+                wsComponents.scheme = (wsComponents.scheme == "https") ? "wss" : "ws"
+                wsComponents.path = "/api/ws"
+                wsComponents.queryItems = [.init(name: "ticket", value: ticket)]
+                return wsComponents.string
+            }
+            // Fallback: the server may return a full wsUrl instead of a ticket.
+            return json["url"] as? String
         } catch {
             return nil
         }

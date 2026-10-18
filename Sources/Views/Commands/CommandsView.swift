@@ -85,9 +85,3 @@ struct CommandsView: View {
     }
 }
 
-/// A command row's name + optional argument, as returned by `commands.catalog`.
-private struct CommandEntry: Identifiable {
-    let id: String
-    let name: String
-    let arg: String
-}
