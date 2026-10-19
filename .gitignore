@@ -20,3 +20,4 @@ xcuserdata/
 # Swiftly toolchain archives
 swiftly-*.tar.gz
 swiftly-*.tar.gz.sig
+swiftly
