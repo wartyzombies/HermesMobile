@@ -52,9 +52,11 @@ final class GatewayConnection {
     /// - Parameters:
     ///   - url: the gateway WebSocket URL (must be `wss://`).
     ///   - ticket: a single-use WS ticket minted by an authenticated session.
-    func connect(to url: URL, with ticket: WebSocketTicket) {
+    /// - Note: When `ticket` is nil (unauthenticated gateway), the
+    ///   transport dials without a ticket.
+    func connect(to url: URL, with ticket: WebSocketTicket?) {
         // Supply the single-use ticket to the transport before each dial (R6).
-        client.ticketProvider = { ticket.wsUrl.isEmpty ? nil : ticket.wsUrl }
+        client.ticketProvider = { ticket?.wsUrl.isEmpty == false ? ticket?.wsUrl : nil }
         client.connect(wsUrl: url)
     }
 

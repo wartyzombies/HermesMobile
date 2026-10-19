@@ -72,7 +72,7 @@ public struct AuthView: View {
                         description: Text("This gateway is on a trusted network.")
                     )
                     Button("Connect") {
-                        onAuthenticated(.basic(username: "", accessToken: "", expiresAt: nil))
+                        onAuthenticated(.none)
                     }
                     .buttonStyle(.borderedProminent)
                 } else {
