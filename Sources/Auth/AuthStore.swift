@@ -23,26 +23,30 @@ public enum AuthProvider: String, Codable, Sendable {
 
 /// Stored credentials for a single gateway host.
 public enum GatewayCredentials: Sendable {
+    /// No authentication required — gateway is open.
+    case none
     /// Basic-auth session: the server returned an HMAC-signed session token
     /// after username/password login.
     case basic(username: String, accessToken: String, expiresAt: Date?)
     /// OAuth session: JWT access token (15-min TTL in v1), optional refresh.
     case oauth(accessToken: String, refreshToken: String?, expiresAt: Date?, provider: AuthProvider)
 
-    /// The bearer token to send in `Authorization: Bearer <token>` or as a
-    /// WS ticket query parameter.
-    public var accessToken: String {
+    /// The bearer token to send in `Authorization: Bearer …` or as a
+    /// WS ticket query parameter. Returns nil when unauthenticated.
+    public var accessToken: String? {
         switch self {
-        case .basic(_, let token, _):      return token
-        case .oauth(let token, _, _, _):   return token
+        case .none:                     return nil
+        case .basic(_, let token, _):   return token
+        case .oauth(let token, _, _, _): return token
         }
     }
 
     /// When the token expires, if known.
     public var expiresAt: Date? {
         switch self {
-        case .basic(_, _, let d):          return d
-        case .oauth(_, _, let d, _):       return d
+        case .none:                    return nil
+        case .basic(_, _, let d):      return d
+        case .oauth(_, _, let d, _):   return d
         }
     }
 
@@ -54,9 +58,10 @@ public enum GatewayCredentials: Sendable {
     }
 
     /// The auth provider that issued this credential.
-    public var provider: AuthProvider {
+    public var provider: AuthProvider? {
         switch self {
-        case .basic:          return .basic
+        case .none:             return nil
+        case .basic:            return .basic
         case .oauth(_, _, _, let p): return p
         }
     }
@@ -182,6 +187,8 @@ public final class AuthStore: Sendable {
     private func encode(_ creds: GatewayCredentials) throws -> Data {
         let wrapper: [String: Any] = {
             switch creds {
+            case .none:
+                return [ "type": "none" ] as [String: Any]
             case .basic(let u, let t, let exp):
                 return [
                     "type": "basic",
@@ -218,6 +225,8 @@ public final class AuthStore: Sendable {
             return nil
         }()
         switch type {
+        case "none":
+            return .none
         case "basic":
             guard let u = dict["username"] as? String,
                   let t = dict["accessToken"] as? String else {
