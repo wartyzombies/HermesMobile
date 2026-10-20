@@ -128,6 +128,8 @@ public final class HermesAuthenticator {
 
     /// Active PKCE state (survives the OAuth round-trip).
     private var activePKCE: PKCE?
+    /// Active OAuth provider (survives the OAuth round-trip).
+    private var activeProvider: AuthProvider?
 
     /// URL session for HTTP requests.
     private let urlSession: URLSession
@@ -227,6 +229,7 @@ public final class HermesAuthenticator {
 
         let pkce = PKCE()
         self.activePKCE = pkce
+        self.activeProvider = .nous
 
         let callbackPath = config.baseURL.appendingPathComponent("auth/callback").absoluteString
         var components = URLComponents(string: "https://portal.nousresearch.com/oauth/authorize")!
@@ -267,6 +270,7 @@ public final class HermesAuthenticator {
 
         let pkce = PKCE()
         self.activePKCE = pkce
+        self.activeProvider = .oidc
 
         let callbackPath = config.baseURL.appendingPathComponent("auth/callback").absoluteString
         var components = URLComponents(url: authURL, resolvingAgainstBaseURL: true)!
@@ -310,7 +314,8 @@ public final class HermesAuthenticator {
         }
 
         let expiresAt = parseCookieExpiry(from: cookieHeader)
-        let provider: AuthProvider = (config.oidcIssuer != nil) ? .oidc : .nous
+        // Fallback to config-based inference only if flow wasn't tracked.
+        let provider: AuthProvider = self.activeProvider ?? (config.oidcIssuer != nil ? .oidc : .nous)
 
         let creds = GatewayCredentials.oauth(
             accessToken: token,
@@ -320,6 +325,7 @@ public final class HermesAuthenticator {
         )
         try store(creds)
         self.activePKCE = nil
+        self.activeProvider = nil
         self.credentials = creds
         return creds
     }
