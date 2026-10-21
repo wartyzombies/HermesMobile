@@ -1,6 +1,7 @@
 import SwiftUI
 
 import Foundation
+import GeneratedModels
 
 /// Slash-command catalog: lists available commands grouped by category
 /// and lets the user execute one via `slash.exec`.

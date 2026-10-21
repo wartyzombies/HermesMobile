@@ -76,6 +76,32 @@ xcodebuild -scheme HermesMobile -destination 'generic/platform=macOS' build
 > device (`name=iPhone 15`) fails; use `-destination 'generic/platform=iOS Simulator'`.
 > The Xcode build compiles the library; there is no `.xcodeproj` (SwiftPM only).
 
+### SDK pin (macOS 27 SDK vs. the CLT toolchain)
+
+The installed Command Line Tools ship the **macOS 27 SDK**, where SwiftUI's
+`@State` is an `@externalMacro` that needs the `SwiftUIMacros` plugin. The CLT
+toolchain does **not** ship that plugin, so a plain `swift build` fails with:
+
+```
+error: external macro implementation type 'SwiftUIMacros.StateMacro' could not
+be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+```
+
+Only a Swift 6.2-built copy of the plugin exists on this machine
+(`/Applications/Swift Playground.app/…/libSwiftUIMacros.dylib`), and the
+6.4 compiler rejects it ("produced malformed response"). Build against the
+**macOS 26.5 SDK** instead — it declares `@State` as a plain property wrapper
+and needs no plugin:
+
+```bash
+export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
+swift build && swift test
+```
+
+The permanent fix is installing an Xcode whose toolchain matches the macOS 27
+SDK (Swift 6.4+ shipping `libSwiftUIMacros.dylib`). There are no iOS SDKs
+installed, so iOS builds are not possible on this machine at all.
+
 ## Code generation (read before regenerating)
 
 `Sources/Generated/*.swift` is machine-generated from

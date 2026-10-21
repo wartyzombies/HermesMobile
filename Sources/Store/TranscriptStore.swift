@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import GeneratedModels
 
 /// In-memory model of the chat transcript, driven by server notifications.
 ///
@@ -24,9 +25,15 @@ final class TranscriptStore {
     /// The `seq` watermark of the last applied event.
     var latestWatermark: Int = 0
 
-    /// Create a store bound to a connection.
+    /// Create an unbound store. Bind it to its connection with
+    /// `attach(gateway:)` once the connection is fully initialised.
+    init() {}
+
+    /// Bind the store to the connection that drives it.
+    ///
+    /// The connection is held weakly, so binding never creates a retain cycle.
     /// - Parameter gateway: the connection whose events drive the transcript.
-    init(gateway: GatewayConnection) {
+    func attach(gateway: GatewayConnection) {
         self.gateway = gateway
     }
 

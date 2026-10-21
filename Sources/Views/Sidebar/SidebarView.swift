@@ -1,6 +1,7 @@
 import SwiftUI
 
 import Foundation
+import GeneratedModels
 
 /// The navigation sidebar: stored sessions and the project tree.
 ///

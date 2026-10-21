@@ -31,12 +31,14 @@ struct AuthGateView: View {
             TextField("Gateway URL (e.g. https://gateway.example:9119)", text: $baseURL)
                 .textFieldStyle(.roundedBorder)
                 .autocorrectionDisabled()
+                #if os(iOS)
                 .textInputAutocapitalization(.never)
                 .keyboardType(.URL)
+                #endif
                 .padding(.horizontal)
 
             Button("Continue") {
-                guard let url = URL(string: baseURL), !baseURL.isEmpty else {
+                guard URL(string: baseURL) != nil, !baseURL.isEmpty else {
                     errorMessage = "Enter a valid gateway URL"
                     return
                 }

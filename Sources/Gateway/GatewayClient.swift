@@ -43,6 +43,10 @@ private final class PendingCall: @unchecked Sendable {
 // MARK: - Server→client request handler
 
 /// Handles a JSON-RPC request initiated by the gateway (e.g. an approval).
+///
+/// Main-actor isolated: handlers surface gateway-initiated requests to the
+/// UI, which owns main-actor state.
+@MainActor
 public protocol ServerRequestHandler: AnyObject, Sendable {
     /// Return `true` if the request was handled; the client will not
     /// send the default `-32601` method-not-found reply.
@@ -176,7 +180,8 @@ public final class GatewayClient: NSObject {
 
         setState(.connecting)
 
-        let gen = ++socketGeneration
+        socketGeneration += 1
+        let gen = socketGeneration
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = TimeInterval(connectTimeoutMs) / 1000.0
         let session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
@@ -357,7 +362,7 @@ public final class GatewayClient: NSObject {
             if handler.handle(request: req) { return }
         }
         // Unhandled: answer -32601 so the backend doesn't wait out its deadline.
-        Self.logger.notice("unhandled server→client request: \(method, privacy: .public)")
+        Self.logger.notice("unhandled server→client request: \(method)")
         fail(JSONRPCErrorCode.methodNotFound, "method not found: \(method)")
     }
 
@@ -394,7 +399,8 @@ public final class GatewayClient: NSObject {
             throw JSONRPCError(code: -1, message: "gateway not connected")
         }
 
-        let id = ++nextId
+        nextId += 1
+        let id = nextId
         let jsonId = JSONRPCFrame.JSONID.number(id)
         let key = jsonId.key
         let timeout = timeoutMs ?? requestTimeoutMs
@@ -436,7 +442,10 @@ public final class GatewayClient: NSObject {
                     throw JSONRPCError(code: -1, message: "encoding failed")
                 }
                 webSocketTask?.send(.string(text)) { error in
-                    if let error {
+                    guard let error else { return }
+                    // The completion handler is `@Sendable`; hop to the main
+                    // actor before touching main-actor-isolated state.
+                    Task { @MainActor in
                         if let removed = self.pending.removeValue(forKey: key) {
                             removed.reject(error)
                         }
@@ -461,7 +470,7 @@ public final class GatewayClient: NSObject {
                 let ns = UInt64(self.heartbeatIntervalMs) * 1_000_000
                 try? await Task.sleep(nanoseconds: ns)
                 guard !Task.isCancelled else { return }
-                await self.sendHeartbeat()
+                self.sendHeartbeat()
             }
         }
     }
@@ -505,7 +514,11 @@ public final class GatewayClient: NSObject {
         let id = handlerSeq
         eventHandlers[eventType, default: [:]][id] = handler
         return HandlerToken { [weak self] in
-            self?.eventHandlers[eventType]?.removeValue(forKey: id)
+            // The token's closure is `@Sendable`, so hop to the main actor
+            // before touching main-actor-isolated state.
+            Task { @MainActor in
+                self?.eventHandlers[eventType]?.removeValue(forKey: id)
+            }
         }
     }
 
@@ -517,7 +530,11 @@ public final class GatewayClient: NSObject {
         let id = handlerSeq
         wildcardHandlers[id] = handler
         return HandlerToken { [weak self] in
-            self?.wildcardHandlers.removeValue(forKey: id)
+            // The token's closure is `@Sendable`, so hop to the main actor
+            // before touching main-actor-isolated state.
+            Task { @MainActor in
+                self?.wildcardHandlers.removeValue(forKey: id)
+            }
         }
     }
 
@@ -566,7 +583,7 @@ public final class GatewayClient: NSObject {
         }
 
         // Dispatch to typed handlers
-        for h in eventHandlers[eventType] ?? [] {
+        for h in eventHandlers[eventType] ?? [:] {
             h.value(params)
         }
         // Wildcard
@@ -582,7 +599,8 @@ public final class GatewayClient: NSObject {
     private func fetchReplay() {
         guard replayEnabled, !lastSeenSeq.isEmpty else { return }
 
-        let gen = ++replayGeneration
+        replayGeneration += 1
+        let gen = replayGeneration
         var hold: [String: [JSONValue]] = [:]
         for (sid, _) in lastSeenSeq {
             hold[sid] = []
@@ -620,7 +638,8 @@ public final class GatewayClient: NSObject {
             guard gen == replayGeneration else { return }
 
             // Epoch mismatch → backend restarted, cursor invalid.
-            if let epoch = result.epoch, !epoch.isEmpty {
+            let epoch = result.epoch
+            if !epoch.isEmpty {
                 if let known = replayEpoch, epoch != known {
                     replayEpoch = epoch
                     // Old cursor no longer valid — skip to head.
@@ -653,7 +672,7 @@ public final class GatewayClient: NSObject {
                 }
             }
         } catch {
-            Self.logger.notice("replay fetch failed for \(sid, privacy: .public)")
+            Self.logger.notice("replay fetch failed for \(sid)")
         }
 
         flushReplayHold(sid: sid, generation: gen)
@@ -677,7 +696,7 @@ public final class GatewayClient: NSObject {
     /// Drop the current socket and transition to `.closed`.
     /// - Parameter reason: a short, non-sensitive reason (logged).
     private func dropSocket(reason: String) {
-        Self.logger.notice("dropSocket: \(reason, privacy: .public)")
+        Self.logger.notice("dropSocket: \(reason)")
         let wasOpen = state == .open
         let opened = openedAt
         webSocketTask?.cancel(with: .goingAway, reason: nil)
@@ -701,7 +720,7 @@ public final class GatewayClient: NSObject {
     private func setState(_ newState: GatewayConnectionState) {
         guard state != newState else { return }
         state = newState
-        Self.logger.notice("state → \(newState.rawValue, privacy: .public)")
+        Self.logger.notice("state → \(newState.rawValue)")
         onStateChange?(newState)
     }
 

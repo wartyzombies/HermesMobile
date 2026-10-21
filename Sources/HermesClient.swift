@@ -256,6 +256,25 @@ public final class HermesClient {
 
     // MARK: - Approvals
 
+    /// Tell the backend that the approval card is on screen, so its timeout
+    /// clock starts.
+    /// - Parameters:
+    ///   - sessionID: the session the approval belongs to.
+    ///   - requestID: the approval's request id.
+    /// - Returns: the acknowledgement.
+    public func acknowledgeApproval(
+        sessionID: String,
+        requestID: String
+    ) async throws -> ApprovalReceivedResult {
+        try await gateway.request(
+            GWMethod.Approval_received,
+            params: .object([
+                "session_id": .string(sessionID),
+                "request_id": .string(requestID),
+            ])
+        )
+    }
+
     /// Answer a dangerous-command approval prompt.
     /// - Parameters:
     ///   - sessionID: the session the approval belongs to.

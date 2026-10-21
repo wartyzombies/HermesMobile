@@ -161,7 +161,7 @@ public final class HermesAuthenticator {
         }
 
         guard httpResponse.statusCode == 200 else {
-            throw AuthError.invalidResponse("status \\(httpResponse.statusCode)")
+            throw AuthError.invalidResponse("status \(httpResponse.statusCode)")
         }
 
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
@@ -337,21 +337,24 @@ public final class HermesAuthenticator {
     ///
     /// This is the closure to wire into `GatewayClient.ticketProvider`.
     public func mintWSTicket() async -> String? {
-        guard let creds = credentials, !creds.isExpired else {
+        guard let creds = credentials, !creds.isExpired,
+              let accessToken = creds.accessToken else {
             return nil
         }
 
         let url = config.baseURL.appendingPathComponent("api/ws/ticket")
-        guard let (data, httpResponse) = try? await request(
-            url,
-            method: "POST",
-            headers: ["Authorization": "Bearer \(creds.accessToken)"]
-        ), httpResponse.statusCode == 200 else {
-            return nil
-        }
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            return nil
-        }
+        do {
+            let (data, httpResponse) = try await request(
+                url,
+                method: "POST",
+                headers: ["Authorization": "Bearer \(accessToken)"]
+            )
+            guard httpResponse.statusCode == 200 else {
+                return nil
+            }
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                return nil
+            }
             if let ticket = json["ticket"] as? String {
                 // Build the full WS URL from the ticket.
                 // The dashboard's WS endpoint is at /api/ws.
@@ -372,10 +375,10 @@ public final class HermesAuthenticator {
 
     /// Sign out: clear stored credentials and notify the server.
     public func signOut() async throws {
-        guard let creds = credentials else { return }
+        guard let creds = credentials, let accessToken = creds.accessToken else { return }
         // Hit the logout endpoint to clear server-side session.
         let url = config.baseURL.appendingPathComponent("auth/logout")
-        _ = try? await request(url, method: "POST", headers: ["Authorization": "Bearer \(creds.accessToken)"])
+        _ = try? await request(url, method: "POST", headers: ["Authorization": "Bearer \(accessToken)"])
 
         // Delete from Keychain.
         let host = config.baseURL.host ?? config.baseURL.absoluteString
@@ -387,14 +390,15 @@ public final class HermesAuthenticator {
 
     /// Return the current session identity from `GET /api/auth/me`.
     public func currentUser() async throws -> AuthUser {
-        guard let creds = credentials, !creds.isExpired else {
+        guard let creds = credentials, !creds.isExpired,
+              let accessToken = creds.accessToken else {
             throw AuthError.noCredentials
         }
 
         let url = config.baseURL.appendingPathComponent("api/auth/me")
         let (data, httpResponse) = try await request(
             url,
-            headers: ["Authorization": "Bearer \(creds.accessToken)"]
+            headers: ["Authorization": "Bearer \(accessToken)"]
         )
         guard httpResponse.statusCode == 200 else {
             throw AuthError.invalidResponse("auth/me failed")
@@ -461,13 +465,14 @@ public final class HermesAuthenticator {
         for part in parts {
             let trimmed = part.trimmingCharacters(in: .whitespaces).lowercased()
             if trimmed.hasPrefix("expires=") || trimmed.hasPrefix("max-age=") {
-                let value = String(trimmed.dropFirst(trimmed.firstIndex(of: "=")!).dropFirst())
+                guard let equals = trimmed.firstIndex(of: "=") else { continue }
+                let value = String(trimmed[trimmed.index(after: equals)...])
                 if trimmed.hasPrefix("max-age="), let seconds = Int(value), seconds > 0 {
                     return Date().addingTimeInterval(Double(seconds))
                 }
                 // Parse HTTP-date for Expires. Hoisted formatter to avoid
                 // re-initializing ICU/locale on every sign-in (hot path).
-                return cookieExpiryFormatter.date(from: value)
+                return Self.cookieExpiryFormatter.date(from: value)
             }
         }
         // Default: access token TTL is 15 minutes (contract v1).
@@ -490,9 +495,10 @@ public struct AuthUser: Sendable {
     public let userID: String
     public let displayName: String?
     public let email: String?
-    public let provider: AuthProvider
+    /// The provider that issued the credential, if any (an open gateway has none).
+    public let provider: AuthProvider?
 
-    public init(userID: String, displayName: String? = nil, email: String? = nil, provider: AuthProvider) {
+    public init(userID: String, displayName: String? = nil, email: String? = nil, provider: AuthProvider? = nil) {
         self.userID = userID
         self.displayName = displayName
         self.email = email

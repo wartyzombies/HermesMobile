@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import GeneratedModels
 
 /// Manages a single WebSocket connection to a `hermes serve` gateway,
 /// including authentication, reconnection, and message correlation.
@@ -16,7 +17,7 @@ final class GatewayConnection {
     private let client = GatewayClient()
 
     /// The transcript store that consumes gateway events.
-    let transcriptStore: TranscriptStore
+    let transcriptStore = TranscriptStore()
 
     /// The typed API surface views use to issue RPCs.
     let api: HermesClient
@@ -34,18 +35,23 @@ final class GatewayConnection {
     var activeSession: String?
 
     init() {
-        self.transcriptStore = TranscriptStore(gateway: self)
         self.api = HermesClient(gateway: client)
+        // Every stored property is initialised at this point, so the store can
+        // be bound to the connection (it holds it weakly).
+        transcriptStore.attach(gateway: self)
         client.onStateChange = { [weak self] newState in
             self?.connectionState = ConnectionState(from: newState)
         }
-        // Forward every gateway event to the transcript store and the
-        // approval manager, hopping back to the main actor.
-        client.onAny { [weak self] params in
+        // Forward every gateway event to the transcript store, hopping back to
+        // the main actor.
+        _ = client.onAny { [weak self] params in
             Task { @MainActor in
                 self?.handleEvent(params)
             }
         }
+        // Approvals arrive as gateway-initiated JSON-RPC requests, not as
+        // event notifications (contract: `x-server-requests`).
+        client.registerRequestHandler(self)
     }
 
     /// Open the connection to `url` using `ticket`.
@@ -73,30 +79,67 @@ final class GatewayConnection {
 
         // Drive the transcript from message/tool events.
         transcriptStore.apply(notification: ServerNotification(name: type, payload: params))
-
-        // Surface approval requests to the UI.
-        if type == GWNotification.Approval_received {
-            if let request = approvalRequest(from: dict) {
-                approvalManager.pending = request
-                approvalTrigger += 1
-            }
-        }
     }
 
-    private func approvalRequest(from dict: [String: JSONValue]) -> ApprovalRequest? {
+    private func approvalRequest(
+        from dict: [String: JSONValue],
+        respond: ((String) -> Void)? = nil
+    ) -> ApprovalRequest? {
         guard let requestId = dict["request_id"]?.stringValue else { return nil }
         let sessionId = dict["session_id"]?.stringValue ?? ""
         // Decode into the generated Codable PendingApproval instead of
         // hand-extracting each field from the JSONValue object.
-        let approval: PendingApproval?
-        if case .object(let obj) = dict,
-           let data = try? JSONEncoder().encode(obj),
-           let decoded = try? JSONDecoder().decode(PendingApproval.self, from: data) {
-            approval = decoded
-        } else {
-            approval = nil
+        guard let data = try? JSONEncoder().encode(dict),
+              let approval = try? JSONDecoder().decode(PendingApproval.self, from: data) else {
+            return nil
         }
-        return ApprovalRequest(id: requestId, approval: approval, sessionId: sessionId)
+        return ApprovalRequest(id: requestId, approval: approval, sessionId: sessionId, respond: respond)
+    }
+}
+
+// MARK: - Server-initiated requests
+
+/// Method names for gateway-initiated (server→client) JSON-RPC requests.
+///
+/// The contract lists these under `x-server-requests`; the model generator
+/// does not emit them, so they are declared here.
+enum GatewayServerRequest {
+    /// "A dangerous command awaits the user's decision."
+    static let approval = "approval"
+}
+
+extension GatewayConnection: ServerRequestHandler {
+    /// Handle a gateway-initiated request.
+    /// - Parameter request: the inbound server→client request.
+    /// - Returns: `true` when the request was handled, so the client does not
+    ///   reply with `-32601`.
+    func handle(request: ServerRequest) -> Bool {
+        guard request.method == GatewayServerRequest.approval else { return false }
+        // Answer the gateway-initiated request with the user's decision.
+        let responder: (String) -> Void = { choice in
+            request.respond(.object(["choice": .string(choice)]))
+        }
+        guard case .object(let dict) = request.params,
+              let approval = approvalRequest(from: dict, respond: responder) else {
+            // The method is ours, so answer it — a malformed payload is an
+            // internal error, not "method not found".
+            request.fail(JSONRPCErrorCode.internalError, "malformed approval payload")
+            return true
+        }
+        approvalManager.pending = approval
+        approvalTrigger += 1
+
+        // Tell the backend the card is on screen so its timeout clock starts.
+        let sessionId = approval.sessionId
+        let requestId = approval.id
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            _ = try? await self.api.acknowledgeApproval(
+                sessionID: sessionId,
+                requestID: requestId
+            )
+        }
+        return true
     }
 }
 
@@ -128,6 +171,21 @@ struct ApprovalRequest: Identifiable, Equatable {
     let approval: PendingApproval
     /// The session the approval belongs to (needed to respond).
     let sessionId: String
+    /// Answers the gateway-initiated JSON-RPC request this approval arrived
+    /// on. `nil` when the approval was surfaced by polling instead.
+    let respond: ((String) -> Void)?
+
+    init(
+        id: String,
+        approval: PendingApproval,
+        sessionId: String,
+        respond: ((String) -> Void)? = nil
+    ) {
+        self.id = id
+        self.approval = approval
+        self.sessionId = sessionId
+        self.respond = respond
+    }
 
     static func == (lhs: ApprovalRequest, rhs: ApprovalRequest) -> Bool {
         lhs.id == rhs.id
@@ -141,5 +199,5 @@ final class ApprovalManager {
     /// The approval currently awaiting a decision, or `nil`.
     var pending: ApprovalRequest?
 
-    private init() {}
+    init() {}
 }

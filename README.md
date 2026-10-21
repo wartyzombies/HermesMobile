@@ -72,6 +72,17 @@ swift build -c release  # release build
 swift test              # run the unit-test suite
 ```
 
+> **This machine only:** the Command Line Tools ship the macOS 27 SDK, whose
+> SwiftUI `@State` macro needs a `SwiftUIMacros` plugin the toolchain does not
+> provide. Pin the macOS 26.5 SDK (plain property-wrapper `@State`, no plugin):
+>
+> ```bash
+> export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
+> swift build && swift test
+> ```
+>
+> See [`AGENTS.md`](AGENTS.md) for the details.
+
 To build the package with Xcode (there is no `.xcodeproj` — it builds the Swift package scheme directly):
 
 ```bash

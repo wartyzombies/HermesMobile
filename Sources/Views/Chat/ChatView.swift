@@ -1,6 +1,7 @@
 import SwiftUI
 
 import Foundation
+import GeneratedModels
 
 /// The active session transcript with the message composer docked below.
 ///
@@ -15,26 +16,24 @@ struct ChatView: View {
 
     @State private var showingModelPicker = false
     @State private var showingApproval = false
+    @State private var showingCommands = false
     @State private var pendingApproval: ApprovalRequest?
     @State private var modelOptions: [String: [String]] = [:]
     @State private var modelOptionsLoaded = false
 
     var body: some View {
-        let sessionID = gateway?.activeSession
-
         Group {
-            if let sessionID {
+            if let sessionID = gateway?.activeSession {
                 main(sessionID: sessionID)
             } else {
                 emptyState
             }
         }
-        .sheet(item: Binding(
-            get: { sessionID },
-            set: { _ in }
-        )) { sessionID in
-            NavigationStack {
-                CommandsView(sessionID: sessionID)
+        .sheet(isPresented: $showingCommands) {
+            if let sessionID = gateway?.activeSession {
+                NavigationStack {
+                    CommandsView(sessionID: sessionID)
+                }
             }
         }
         // (Re)load history whenever the active session changes.
@@ -84,19 +83,27 @@ struct ChatView: View {
             ToolbarItem(placement: .principal) {
                 Text(sessionTitle).font(.headline)
             }
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: toolbarTrailingPlacement) {
                 Button("Model") {
                     modelOptionsLoaded = false
                     showingModelPicker = true
                 }
             }
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: toolbarTrailingPlacement) {
                 Button("Commands") {
-                    // CommandsView is presented via .sheet(item:) above,
-                    // keyed on gateway?.activeSession.
+                    showingCommands = true
                 }
             }
         }
+    }
+
+    /// `.navigationBarTrailing` is iOS-only; macOS places items automatically.
+    private var toolbarTrailingPlacement: ToolbarItemPlacement {
+        #if os(iOS)
+        return .navigationBarTrailing
+        #else
+        return .automatic
+        #endif
     }
 
     private var emptyState: some View {
@@ -130,16 +137,17 @@ struct ChatView: View {
 
     @ViewBuilder
     private var approvalButtons: some View {
-        guard let request = pendingApproval else { return }
-        let choices = request.approval.choices ?? ["once", "session", "always", "deny"]
-        ForEach(choices, id: \.self) { choice in
-            Button(choice.capitalized) {
-                respond(to: request, choice: choice)
+        if let request = pendingApproval {
+            let choices = request.approval.choices ?? ["once", "session", "always", "deny"]
+            ForEach(choices, id: \.self) { choice in
+                Button(choice.capitalized) {
+                    respond(to: request, choice: choice)
+                    showingApproval = false
+                }
+            }
+            Button("Cancel", role: .cancel) {
                 showingApproval = false
             }
-        }
-        Button("Cancel", role: .cancel) {
-            showingApproval = false
         }
     }
 
@@ -207,7 +215,18 @@ struct ChatView: View {
     }
 
     private func respond(to request: ApprovalRequest, choice: String) {
-        guard let client, let sessionID = gateway?.activeSession else { return }
+        // If the approval arrived on a gateway-initiated JSON-RPC request,
+        // answer that request directly; otherwise fall back to the
+        // `approval.respond` RPC.
+        if let respond = request.respond {
+            respond(choice)
+            return
+        }
+        guard let client else { return }
+        let sessionID = request.sessionId.isEmpty
+            ? (gateway?.activeSession ?? "")
+            : request.sessionId
+        guard !sessionID.isEmpty else { return }
         Task {
             do {
                 _ = try await client.respondApproval(
@@ -248,7 +267,7 @@ private struct MessageBubble: View {
             maxWidth: .infinity,
             alignment: message.role == .user ? .trailing : .leading
         )
-        .background(message.role == .user ? Color.blue.opacity(0.12) : Color(.systemGroupedBackground))
+        .background(message.role == .user ? Color.blue.opacity(0.12) : Color.secondary.opacity(0.12))
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }

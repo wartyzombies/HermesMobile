@@ -6,7 +6,7 @@
 //  The view auto-detects the required provider by probing `/api/status`.
 //
 
-#if canImport(UIKit)
+#if canImport(AuthenticationServices)
 import SwiftUI
 import AuthenticationServices
 
@@ -126,7 +126,9 @@ public struct AuthView: View {
                 .textFieldStyle(.roundedBorder)
                 .textContentType(.username)
                 .autocorrectionDisabled()
+                #if os(iOS)
                 .textInputAutocapitalization(.never)
+                #endif
 
             SecureField("Password", text: $password)
                 .textFieldStyle(.roundedBorder)
