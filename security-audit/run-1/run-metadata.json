@@ -1,0 +1,46 @@
+{
+  "run_id": "run-1",
+  "repo": "HermesMobile",
+  "target": "/opt/data/profiles/coder/cache/scratch/HermesMobile",
+  "source_ref": "3ee63de",
+  "source_dirty": false,
+  "profile": "standard",
+  "scope_paths": [
+    "Sources/Views/Auth/AuthView.swift",
+    "Sources/Views/Auth/AuthGateView.swift",
+    "Sources/HermesClient.swift",
+    "Sources/Gateway"
+  ],
+  "expanded_scope_paths": [
+    "Sources/Auth/AuthStore.swift",
+    "Sources/Auth/HermesAuthenticator.swift",
+    "Sources/Auth/OAuthPKCE.swift",
+    "Sources/Auth/WebSocketTicket.swift",
+    "Sources/Gateway/GatewayClient.swift",
+    "Sources/Gateway/GatewayConnection.swift"
+  ],
+  "budget": null,
+  "execution_policy": "sandboxed-source-and-local-only",
+  "selected_companion_files": [],
+  "prior_run_paths": [],
+  "shared_file_owners": {
+    "run_metadata": "parent",
+    "architecture": "parent",
+    "coverage_ledger": "parent",
+    "findings": "parent",
+    "report_md": "parent",
+    "findings_detail_md": "parent",
+    "needs_validation_md": "parent"
+  },
+  "run_status": "incomplete",
+  "incomplete_reason": "independent_source_verification_complete_for_all_final_findings;_new_needs_validation_finding_auth-oauth-state-param-missing_requires_server-side_state_validation;_sandbox_local_execution_unavailable_no_swift_toolchain_extracted (swiftly tarball present but consent-blocked);_all_artifacts_written_and_validators_pass",
+  "notes": [
+    "User-scoped full audit per clarify response: scoped full audit on HermesMobile, auth/WebSocket/gateway surfaces.",
+    "No user-set agent budget; budget null (reserved critics and validation implicitly).",
+    "Local target-controlled execution blocked: no Swift toolchain on this host (command -v swift/swiftc empty). Source-only inspection permitted.",
+    "User confirmed 'Guidance only' earlier, then later selected scoped full audit on HermesMobile; full-audit path taken with full-audit artifacts below.",
+    "Phase 5 completed: 2 independent verifier subagents (auth-oauth-pkce-stale-on-cancel REJECTED; auth-ws-ticket-nil-handle REJECTED); stronger finding auth-oauth-state-param-missing added (needs_validation, medium). All Phase 6 artifacts (findings.json, coverage-ledger.json, architecture.md, REPORT.md, FINDINGS-DETAIL.md, NEEDS-VALIDATION.md, run-metadata.json) written and validated.",
+    "Local sandbox execution unavailable: Swift toolchain absent from host PATH; swiftly-1.1.2 tarball present in repo but extraction blocked by consent gate; build/test of SwiftUI/auth surfaces cannot be done locally.",
+    "Discrepancy resolved: original auth-oauth-pkce-stale-on-cancel finding rejected by independent source review (stale state never transmitted/read elsewhere, not a boundary violation); auth-keychain-access-control remains confirmed (informational); auth-ws-ticket-nil-handle rejected (caller surfaces error); auth-oauth-state-param-missing is the validated new finding requiring server-side confirmation."
+  ]
+}

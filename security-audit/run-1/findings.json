@@ -1,0 +1,230 @@
+[
+  {
+    "verdict": "confirmed",
+    "fingerprint": "auth-keychain-access-control",
+    "title": "Keychain credentials may be extractable on compromised device",
+    "description": "AuthStore.swift persists GatewayCredentials with kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly. Credentials are accessible after device unlock; on a compromised device, tokens may be extracted via Keychain dumps.",
+    "root_cause": "Keychain item accessibility class may not provide sufficient protection beyond device passcode.",
+    "intended_behavior": "Credentials should be protected by stronger accessibility (e.g. kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly or biometric-protected storage) for high-value tokens.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "Sources/Auth/AuthStore.swift",
+        "line": 109,
+        "scope": "store(_:forHost:)",
+        "description": "Credentials written to Keychain."
+      },
+      {
+        "kind": "propagation",
+        "file": "Sources/Auth/AuthStore.swift",
+        "line": 117,
+        "scope": "kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly",
+        "description": "Accessibility attribute applied."
+      },
+      {
+        "kind": "sink",
+        "file": "Sources/Auth/AuthStore.swift",
+        "line": 117,
+        "scope": "Keychain persistence",
+        "description": "Credentials stored with AfterFirstUnlockThisDeviceOnly accessibility."
+      }
+    ],
+    "evidence": [
+      {
+        "file": "Sources/Auth/AuthStore.swift",
+        "line": 117,
+        "description": "kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly used for stored credentials."
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "system_configuration",
+        "description": "Device compromised or passcode guessed; no additional app-level encryption."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "No live exploitation; state pollution only affects local client's subsequent auth flows.",
+      "payloads": [
+        "empty payload - source-only review"
+      ],
+      "instructions": [
+        "Source review complete; verify accessibility attribute value matches intended policy."
+      ],
+      "observed_result": "Source review confirms kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly used for stored credentials."
+    },
+    "remediation": {
+      "strategy": "Consider stronger Keychain accessibility for high-value tokens (e.g. kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly or biometric-protected storage).",
+      "code_changes": [
+        {
+          "file_name": "Sources/Auth/AuthStore.swift",
+          "fixed_code": "Change kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly to kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly for high-value tokens."
+        }
+      ]
+    },
+    "severity": {
+      "overall_severity": "informational",
+      "likelihood": {
+        "score": "low",
+        "reason": "Requires device compromise or passcode guessing."
+      },
+      "impact": {
+        "score": "low",
+        "reason": "No credential exposure at rest; only Keychain accessibility."
+      }
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Source-reviewed: confirmed accessibility attribute value."
+    }
+  },
+  {
+    "verdict": "rejected",
+    "fingerprint": "auth-oauth-pkce-stale-on-cancel",
+    "title": "PKCE state not cleared when OAuth/ASWebAuthenticationSession is cancelled",
+    "description": "HermesAuthenticator stores PKCE verifier and active provider (activePKCE, activeProvider) in startNousOAuth()/startOIDCAuth() and clears them only in completeOAuth(); the ASWebAuthenticationSession cancel path returns early without clearing them.",
+    "claimed_root_cause": "Cancellation path in AuthView.presentOAuth returns early without clearing activePKCE/activeProvider.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "Sources/Views/Auth/AuthView.swift",
+        "line": 265,
+        "scope": "presentOAuth ASWebAuthenticationSession completion",
+        "description": "ASWebAuthenticationSession completion handler invoked; .canceledLogin branch at 268-269 returns at 270-272."
+      },
+      {
+        "kind": "propagation",
+        "file": "Sources/Views/Auth/AuthView.swift",
+        "line": 268,
+        "scope": ".canceledLogin branch",
+        "description": "Returns without clearing activePKCE/activeProvider."
+      },
+      {
+        "kind": "sink",
+        "file": "Sources/Auth/HermesAuthenticator.swift",
+        "line": 327,
+        "scope": "completeOAuth",
+        "description": "Only removal of activePKCE/activeProvider (repo-wide search: 4 references total); unreachable on cancel."
+      }
+    ],
+    "evidence": [
+      {
+        "file": "Sources/Auth/HermesAuthenticator.swift",
+        "line": 130,
+        "description": "Declaration of activePKCE / activeProvider."
+      },
+      {
+        "file": "Sources/Auth/HermesAuthenticator.swift",
+        "line": 231,
+        "description": "Stored in startNousOAuth."
+      },
+      {
+        "file": "Sources/Auth/HermesAuthenticator.swift",
+        "line": 327,
+        "description": "Cleared only in completeOAuth."
+      },
+      {
+        "file": "Sources/Views/Auth/AuthView.swift",
+        "line": 265,
+        "description": "Actual cancel handler (original claim cited line 254; that line is a comment)."
+      }
+    ],
+    "reason": "No security boundary is crossed. activePKCE is never read in the codebase and never transmitted; the authorization-code token exchange is server-side (comment 291-301), so no verifier leaves the device. activeProvider is only read at line 318 as a label fallback and is overwritten by any subsequent start* call before completeOAuth is reachable. A stale in-process value that is never transmitted and never observed by another principal is a robustness/UX nit (severity informational at best), not a vulnerability. Independent verifier (fresh source-reading agent, subagent id sa-0-4cd1a811) confirmed all 4 references and the non-security impact."
+  },
+  {
+    "verdict": "needs_validation",
+    "fingerprint": "auth-oauth-state-param-missing",
+    "title": "OAuth authorization request missing anti-CSRF `state` parameter; never validated on callback",
+    "description": "Both OAuth flows (startNousOAuth lines 235-243; startOIDCAuth 277-284) build authorization URLs without a `state` parameter. completeOAuth (297-331) captures session cookie from dashboard /auth/callback but never validates a returned `state` value. Per OAuth 2.0 BCP (RFC 6749 \u00a710.12), missing `state` removes anti-CSRF protection on the authorization request.",
+    "claimed_root_cause": "Authorization URL construction omits `state`; callback never validates it.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "Sources/Auth/HermesAuthenticator.swift",
+        "line": 235,
+        "scope": "startNousOAuth URL build",
+        "description": "authorize URL built (scope/client_id/redirect_uri/PKCE); no `state` field."
+      },
+      {
+        "kind": "propagation",
+        "file": "Sources/Auth/HermesAuthenticator.swift",
+        "line": 277,
+        "scope": "startOIDCAuth URL build",
+        "description": "Same omission for OIDC flow."
+      },
+      {
+        "kind": "sink",
+        "file": "Sources/Auth/HermesAuthenticator.swift",
+        "line": 297,
+        "scope": "completeOAuth callback",
+        "description": "Captures cookie/session; never reads/validates `state`."
+      }
+    ],
+    "evidence": [
+      {
+        "file": "Sources/Auth/HermesAuthenticator.swift",
+        "line": 235,
+        "description": "startNousOAuth \u2014 authorization URL construction, no state parameter."
+      },
+      {
+        "file": "Sources/Auth/HermesAuthenticator.swift",
+        "line": 277,
+        "description": "startOIDCAuth \u2014 same omission."
+      },
+      {
+        "file": "Sources/Auth/HermesAuthenticator.swift",
+        "line": 297,
+        "description": "completeOAuth \u2014 callback handler never validates state."
+      }
+    ],
+    "blockers": [
+      "Server-side OAuth state-validation policy and gateway token-exchange behavior not visible in this repository; practical exploitability requires server-side confirmation (token exchange and authorization endpoint behavior are server-side). Source review completed by independent verifier; deployment/server-side validation required."
+    ],
+    "validation_plan": {
+      "local": "Confirm source absence; add state-generation code in start* flows; add validation in completeOAuth.",
+      "deployment": "Verify gateway server validates `state` during token exchange; confirm no server-side state bypass; test authorization-request CSRF resistance against deployed gateway."
+    }
+  },
+  {
+    "verdict": "rejected",
+    "fingerprint": "auth-ws-ticket-nil-handle",
+    "title": "Failed WS ticket minting silently proceeds to unauthenticated dial",
+    "description": "mintWSTicket() in HermesAuthenticator.swift returns nil on any failure (non-200 HTTP, missing ticket JSON, network error); AuthGateView.authenticate() consumes the result before connecting.",
+    "claimed_root_cause": "mintWSTicket swallows errors with try? and returns nil; callers do not surface ticket-minting failure.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "Sources/Auth/HermesAuthenticator.swift",
+        "line": 339,
+        "scope": "mintWSTicket",
+        "description": "POST /api/ws/ticket; returns nil on failure."
+      },
+      {
+        "kind": "propagation",
+        "file": "Sources/Views/Auth/AuthGateView.swift",
+        "line": 66,
+        "scope": "authenticate(credentials:config:)",
+        "description": "Guard checks mint result; on nil sets errorMessage = \"Failed to mint WebSocket ticket\" and returns (lines 68-74)."
+      },
+      {
+        "kind": "sink",
+        "file": "Sources/Views/Auth/AuthGateView.swift",
+        "line": 68,
+        "scope": "user-visible error path",
+        "description": "No WebSocket dial with a nil ticket; user sees an error message."
+      }
+    ],
+    "evidence": [
+      {
+        "file": "Sources/Auth/HermesAuthenticator.swift",
+        "line": 339,
+        "description": "mintWSTicket performs POST /api/ws/ticket."
+      },
+      {
+        "file": "Sources/Views/Auth/AuthGateView.swift",
+        "line": 66,
+        "description": "authenticate() guards the mint result and surfaces a user-visible error instead of dialing."
+      }
+    ],
+    "reason": "The claim that a failed mint leads to a silent unauthenticated dial is refuted by source: AuthGateView.authenticate() (lines 66-74) uses guard let ... else { errorMessage = \"Failed to mint WebSocket ticket\"; return }, which prevents GatewayConnection.connect() from ever being called with a nil or failed ticket. No weaker fallback auth path or stale-credential cache exists in the code. Independent verifier (subagent id sa-1-3db160de) confirmed the guard and absence of a fallback path. The behavior is an availability/UX issue (errors are not differentiated), not a security boundary violation."
+  }
+]

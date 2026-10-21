@@ -1,0 +1,299 @@
+[
+  {
+    "coverage_id": "Sources%2FAuth%2FHermesAuthenticator.swift%23235::OAuth%20authorization%20request%20construction::com.nousresearch.hermes.mobile.auth::ATTACK-CLASSES.md%23Authentication%20bypass",
+    "canonical_refs": {
+      "surface": "Sources/Auth/HermesAuthenticator.swift#235",
+      "boundary": "OAuth authorization request construction",
+      "subsystem": "com.nousresearch.hermes.mobile.auth",
+      "attack_class": "ATTACK-CLASSES.md#Authentication bypass"
+    },
+    "surface": "Sources/Auth/HermesAuthenticator.swift",
+    "boundary": "OAuth authorization request construction",
+    "subsystem": "com.nousresearch.hermes.mobile.auth",
+    "attack_class": "ATTACK-CLASSES.md#Authentication bypass",
+    "starting_paths": [
+      "Sources/Auth/HermesAuthenticator.swift#235-243",
+      "Sources/Auth/HermesAuthenticator.swift#277-284",
+      "Sources/Auth/HermesAuthenticator.swift#297-331"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Authentication bypass",
+    "selected_companion_blocks": [],
+    "excluded_blocks": [
+      {
+        "block": "WEB-PROTOCOL-AND-AUTH.md",
+        "reason": "No dedicated companion block required for OAuth state-parameter review."
+      }
+    ],
+    "prior_status": "new",
+    "attempts": [],
+    "wave": 2,
+    "status": "candidate",
+    "agent_id": "parent-1",
+    "reviewed_paths": [
+      "Sources/Auth/HermesAuthenticator.swift#235",
+      "Sources/Auth/HermesAuthenticator.swift#277",
+      "Sources/Auth/HermesAuthenticator.swift#297"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "parent-1",
+        "invariant": "Every authorization request includes an unguessable state parameter and the callback rejects mismatches",
+        "reviewed_paths": [
+          "Sources/Auth/HermesAuthenticator.swift#235",
+          "Sources/Auth/HermesAuthenticator.swift#277",
+          "Sources/Auth/HermesAuthenticator.swift#297"
+        ],
+        "method": "source",
+        "result": "state parameter absent from both authorization URLs and never validated in completeOAuth; server-side enforcement unknown",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "auth-oauth-state-param-missing"
+    ],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "Sources%2FViews%2FAuth%2FAuthView.swift%23100::AuthView%20providerButtons::com.nousresearch.hermes.mobile.auth::ATTACK-CLASSES.md%23Authentication%20bypass",
+    "canonical_refs": {
+      "surface": "Sources/Views/Auth/AuthView.swift#100",
+      "boundary": "AuthView providerButtons",
+      "subsystem": "com.nousresearch.hermes.mobile.auth",
+      "attack_class": "ATTACK-CLASSES.md#Authentication bypass"
+    },
+    "surface": "Sources/Views/Auth/AuthView.swift",
+    "boundary": "AuthView providerButtons",
+    "subsystem": "com.nousresearch.hermes.mobile.auth",
+    "attack_class": "ATTACK-CLASSES.md#Authentication bypass",
+    "starting_paths": [
+      "Sources/Views/Auth/AuthView.swift#100-117",
+      "Sources/Auth/HermesAuthenticator.swift#189-252"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Authentication bypass",
+    "selected_companion_blocks": [],
+    "excluded_blocks": [
+      {
+        "block": "WEB-PROTOCOL-AND-AUTH.md",
+        "reason": "Companion block not required for this surface; kept out of scope"
+      }
+    ],
+    "prior_status": "new",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "parent-1",
+    "reviewed_paths": [
+      "Sources/Views/Auth/AuthView.swift#265-272",
+      "Sources/Auth/HermesAuthenticator.swift#130",
+      "Sources/Auth/HermesAuthenticator.swift#231",
+      "Sources/Auth/HermesAuthenticator.swift#327",
+      "Sources/Auth/HermesAuthenticator.swift#235",
+      "Sources/Auth/HermesAuthenticator.swift#277",
+      "Sources/Auth/HermesAuthenticator.swift#297"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "parent-1",
+        "invariant": "OAuth authorization request carries an anti-CSRF state parameter that is validated on callback; cancel path clears PKCE state",
+        "reviewed_paths": [
+          "Sources/Views/Auth/AuthView.swift#265-272",
+          "Sources/Auth/HermesAuthenticator.swift#130",
+          "Sources/Auth/HermesAuthenticator.swift#231",
+          "Sources/Auth/HermesAuthenticator.swift#327",
+          "Sources/Auth/HermesAuthenticator.swift#235",
+          "Sources/Auth/HermesAuthenticator.swift#277",
+          "Sources/Auth/HermesAuthenticator.swift#297"
+        ],
+        "method": "source",
+        "result": "Rejected auth-oauth-pkce-stale-on-cancel (no boundary crossed, verifier-confirmed); new candidate auth-oauth-state-param-missing raised (state param absent and unvalidated)",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "Sources%2FViews%2FAuth%2FAuthView.swift%2324::AuthView::com.nousresearch.hermes.mobile.app::ATTACK-CLASSES.md%23Access%20control",
+    "canonical_refs": {
+      "surface": "Sources/Views/Auth/AuthView.swift#24",
+      "boundary": "AuthView",
+      "subsystem": "com.nousresearch.hermes.mobile.app",
+      "attack_class": "ATTACK-CLASSES.md#Access control"
+    },
+    "surface": "Sources/Views/Auth/AuthView.swift",
+    "boundary": "AuthView",
+    "subsystem": "com.nousresearch.hermes.mobile.app",
+    "attack_class": "ATTACK-CLASSES.md#Access control",
+    "starting_paths": [
+      "Sources/Views/Auth/AuthView.swift"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Access control",
+    "selected_companion_blocks": [],
+    "excluded_blocks": [
+      {
+        "block": "WEB-PROTOCOL-AND-AUTH.md",
+        "reason": "Companion block not required for this surface; kept out of scope"
+      }
+    ],
+    "prior_status": "new",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "parent-1",
+    "reviewed_paths": [
+      "Sources/Views/Auth/AuthView.swift"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "parent-1",
+        "invariant": "source lines reviewed within scope",
+        "method": "source",
+        "result": "covered",
+        "artifact": null,
+        "reviewed_paths": [
+          "Sources/Views/Auth/AuthView.swift"
+        ]
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "Sources%2FViews%2FChat%2FComposerView.swift%2316::ComposerView::com.nousresearch.hermes.mobile.chat::ATTACK-CLASSES.md%23Input%20validation%20and%20control%20flow",
+    "canonical_refs": {
+      "surface": "Sources/Views/Chat/ComposerView.swift#16",
+      "boundary": "ComposerView",
+      "subsystem": "com.nousresearch.hermes.mobile.chat",
+      "attack_class": "ATTACK-CLASSES.md#Input validation and control flow"
+    },
+    "surface": "Sources/Views/Chat/ComposerView.swift",
+    "boundary": "ComposerView",
+    "subsystem": "com.nousresearch.hermes.mobile.chat",
+    "attack_class": "ATTACK-CLASSES.md#Input validation and control flow",
+    "starting_paths": [
+      "Sources/Views/Chat/ComposerView.swift#16-47"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Input validation and control flow",
+    "selected_companion_blocks": [],
+    "excluded_blocks": [
+      {
+        "block": "WEB-PROTOCOL-AND-AUTH.md",
+        "reason": "Companion block not required for this surface; kept out of scope"
+      }
+    ],
+    "prior_status": "new",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "parent-1",
+    "reviewed_paths": [
+      "Sources/Views/Chat/ComposerView.swift"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "parent-1",
+        "invariant": "source lines reviewed within scope",
+        "method": "source",
+        "result": "covered",
+        "artifact": null,
+        "reviewed_paths": [
+          "Sources/Views/Chat/ComposerView.swift"
+        ]
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "Sources%2FViews%2FCommands%2FCommandsView.swift%2329::slash%20command%20execution::com.nousresearch.hermes.mobile.commands::ATTACK-CLASSES.md%23Command%20injection",
+    "canonical_refs": {
+      "surface": "Sources/Views/Commands/CommandsView.swift#29",
+      "boundary": "slash command execution",
+      "subsystem": "com.nousresearch.hermes.mobile.commands",
+      "attack_class": "ATTACK-CLASSES.md#Command injection"
+    },
+    "surface": "Sources/Views/Commands/CommandsView.swift",
+    "boundary": "slash command execution",
+    "subsystem": "com.nousresearch.hermes.mobile.commands",
+    "attack_class": "ATTACK-CLASSES.md#Command injection",
+    "starting_paths": [
+      "Sources/Views/Commands/CommandsView.swift#29-50"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Command injection",
+    "selected_companion_blocks": [],
+    "excluded_blocks": [
+      {
+        "block": "WEB-PROTOCOL-AND-AUTH.md",
+        "reason": "Companion block not required for this surface; kept out of scope"
+      }
+    ],
+    "prior_status": "new",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "parent-1",
+    "reviewed_paths": [
+      "Sources/Views/Commands/CommandsView.swift"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "parent-1",
+        "invariant": "source lines reviewed within scope",
+        "method": "source",
+        "result": "covered",
+        "artifact": null,
+        "reviewed_paths": [
+          "Sources/Views/Commands/CommandsView.swift"
+        ]
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  },
+  {
+    "coverage_id": "Sources%2FViews%2FSidebar%2FSidebarView.swift%2316::gateway.connectionState::com.nousresearch.hermes.mobile.session::ATTACK-CLASSES.md%23Access%20control",
+    "canonical_refs": {
+      "surface": "Sources/Views/Sidebar/SidebarView.swift#16",
+      "boundary": "gateway.connectionState",
+      "subsystem": "com.nousresearch.hermes.mobile.session",
+      "attack_class": "ATTACK-CLASSES.md#Access control"
+    },
+    "surface": "Sources/Views/Sidebar/SidebarView.swift",
+    "boundary": "gateway.connectionState",
+    "subsystem": "com.nousresearch.hermes.mobile.session",
+    "attack_class": "ATTACK-CLASSES.md#Access control",
+    "starting_paths": [
+      "Sources/Views/Sidebar/SidebarView.swift#16-50"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Access control",
+    "selected_companion_blocks": [],
+    "excluded_blocks": [
+      {
+        "block": "WEB-PROTOCOL-AND-AUTH.md",
+        "reason": "Companion block not required for this surface; kept out of scope"
+      }
+    ],
+    "prior_status": "new",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "parent-1",
+    "reviewed_paths": [
+      "Sources/Views/Sidebar/SidebarView.swift"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "parent-1",
+        "invariant": "source lines reviewed within scope",
+        "method": "source",
+        "result": "covered",
+        "artifact": null,
+        "reviewed_paths": [
+          "Sources/Views/Sidebar/SidebarView.swift"
+        ]
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": []
+  }
+]
