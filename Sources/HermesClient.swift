@@ -225,6 +225,28 @@ public final class HermesClient {
         )
     }
 
+    // MARK: - Config
+
+    /// Set a single config key for a session.
+    /// - Parameters:
+    ///   - sessionID: the session to scope the key to.
+    ///   - key: the config key (e.g. `"model"`).
+    ///   - value: the new value.
+    public func configSet(
+        sessionID: String,
+        key: String,
+        value: JSONValue
+    ) async throws -> ConfigSetResult {
+        try await gateway.request(
+            GWMethod.Config_set,
+            params: .object([
+                "session_id": .string(sessionID),
+                "key": .string(key),
+                "value": value,
+            ])
+        )
+    }
+
     // MARK: - Profiles
 
     /// List available profiles.
