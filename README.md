@@ -92,6 +92,23 @@ xcodebuild -scheme HermesMobile -destination 'generic/platform=iOS Simulator' bu
 xcodebuild -scheme HermesMobile -destination 'generic/platform=macOS' build
 ```
 
+### Run on the iOS Simulator
+
+SwiftPM cannot declare an iOS application product, so `xcodebuild` only produces
+library object files — there is no `.app` to install. `Scripts/run-ios-sim.sh`
+builds the package, assembles a launchable `.app` with a generated `Info.plist`,
+and installs and launches it on a simulator:
+
+```bash
+Scripts/run-ios-sim.sh                          # booted device, else first iPhone
+Scripts/run-ios-sim.sh --device "iPhone 16 Pro" # pick a device by name or UDID
+Scripts/run-ios-sim.sh --clean --logs           # rebuild from scratch and stream logs
+```
+
+Artifacts go to `.build/ios-sim/` (gitignored). Requires macOS with Xcode and an
+installed Simulator runtime. If `xcode-select` points at the Command Line Tools,
+the script uses `/Applications/Xcode.app` when present.
+
 ### Linux (portable modules only — no SwiftUI/UIKit)
 
 The `HermesMobile` target imports SwiftUI and UIKit, so it builds only on Apple platforms. On Linux you can build the portable modules:
