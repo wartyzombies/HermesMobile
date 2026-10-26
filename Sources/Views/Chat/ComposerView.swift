@@ -6,6 +6,8 @@ import PHPicker
 import UniformTypeIdentifiers
 #endif
 
+import GeneratedModels
+
 /// The message composer: a growing text field, an attachment button, and a Send button.
 ///
 /// Sends the prompt through `HermesClient.submitPrompt` for the active session
