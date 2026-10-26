@@ -1,0 +1,563 @@
+HermesMobile % swift build
+Building for debugging...
+/Users/jon/IdeaProjects/HermesMobile/Package.swift: HermesLogger: ld: warning: search path '/Users/jon/Library/Developer/Toolchains/swift-6.4.1-RELEASE.xctoolchain/Library/Developer/Frameworks' not found
+/Users/jon/IdeaProjects/HermesMobile/Package.swift: HermesLogger: ld: warning: search path '/Library/Developer/CommandLineTools/Developer/Library/Frameworks' not found
+/Users/jon/IdeaProjects/HermesMobile/Package.swift: HermesCoreWebSocket: ld: warning: search path '/Users/jon/Library/Developer/Toolchains/swift-6.4.1-RELEASE.xctoolchain/Library/Developer/Frameworks' not found
+/Users/jon/IdeaProjects/HermesMobile/Package.swift: HermesCoreWebSocket: ld: warning: search path '/Library/Developer/CommandLineTools/Developer/Library/Frameworks' not found
+error: SwiftCompile normal arm64 failed with a nonzero exit code. Command line:     cd /Users/jon/IdeaProjects
+
+[192 / 203] GeneratedModels/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthGateView.swift:9:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 7 |     @Environment(\.gatewayConnection) private var gateway
+ 8 |
+ 9 |     @State private var baseURL = ""
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+10 |     @State private var showingAuth = false
+11 |     @State private var errorMessage: String?
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthGateView.swift:10:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 8 |
+ 9 |     @State private var baseURL = ""
+10 |     @State private var showingAuth = false
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+11 |     @State private var errorMessage: String?
+12 |
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthGateView.swift:11:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 9 |     @State private var baseURL = ""
+10 |     @State private var showingAuth = false
+11 |     @State private var errorMessage: String?
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+12 |
+13 |     var body: some View {
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthGateView.swift:9:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 7 |     @Environment(\.gatewayConnection) private var gateway
+ 8 |
+ 9 |     @State private var baseURL = ""
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+10 |     @State private var showingAuth = false
+11 |     @State private var errorMessage: String?
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthGateView.swift:10:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 8 |
+ 9 |     @State private var baseURL = ""
+10 |     @State private var showingAuth = false
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+11 |     @State private var errorMessage: String?
+12 |
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthGateView.swift:11:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 9 |     @State private var baseURL = ""
+10 |     @State private var showingAuth = false
+11 |     @State private var errorMessage: String?
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+12 |
+13 |     var body: some View {
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthView.swift:29:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 27 |     let onAuthenticated: (GatewayCredentials) -> Void
+ 28 |
+ 29 |     @State private var authInfo: GatewayAuthInfo?
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 30 |     @State private var username: String = ""
+ 31 |     @State private var password: String = ""
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthView.swift:30:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 28 |
+ 29 |     @State private var authInfo: GatewayAuthInfo?
+ 30 |     @State private var username: String = ""
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 31 |     @State private var password: String = ""
+ 32 |     @State private var errorMessage: String?
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthView.swift:31:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 29 |     @State private var authInfo: GatewayAuthInfo?
+ 30 |     @State private var username: String = ""
+ 31 |     @State private var password: String = ""
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 32 |     @State private var errorMessage: String?
+ 33 |     @State private var isAuthenticating: Bool = false
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthView.swift:32:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 30 |     @State private var username: String = ""
+ 31 |     @State private var password: String = ""
+ 32 |     @State private var errorMessage: String?
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 33 |     @State private var isAuthenticating: Bool = false
+ 34 |     @State private var authenticator: HermesAuthenticator?
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthView.swift:33:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 31 |     @State private var password: String = ""
+ 32 |     @State private var errorMessage: String?
+ 33 |     @State private var isAuthenticating: Bool = false
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 34 |     @State private var authenticator: HermesAuthenticator?
+ 35 |
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthView.swift:34:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 32 |     @State private var errorMessage: String?
+ 33 |     @State private var isAuthenticating: Bool = false
+ 34 |     @State private var authenticator: HermesAuthenticator?
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 35 |
+ 36 |     public init(config: GatewayConfig, onAuthenticated: @escaping (GatewayCredentials) -> Void) {
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthView.swift:29:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 27 |     let onAuthenticated: (GatewayCredentials) -> Void
+ 28 |
+ 29 |     @State private var authInfo: GatewayAuthInfo?
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 30 |     @State private var username: String = ""
+ 31 |     @State private var password: String = ""
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthView.swift:30:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 28 |
+ 29 |     @State private var authInfo: GatewayAuthInfo?
+ 30 |     @State private var username: String = ""
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 31 |     @State private var password: String = ""
+ 32 |     @State private var errorMessage: String?
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthView.swift:31:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 29 |     @State private var authInfo: GatewayAuthInfo?
+ 30 |     @State private var username: String = ""
+ 31 |     @State private var password: String = ""
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 32 |     @State private var errorMessage: String?
+ 33 |     @State private var isAuthenticating: Bool = false
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthView.swift:32:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 30 |     @State private var username: String = ""
+ 31 |     @State private var password: String = ""
+ 32 |     @State private var errorMessage: String?
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 33 |     @State private var isAuthenticating: Bool = false
+ 34 |     @State private var authenticator: HermesAuthenticator?
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthView.swift:33:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 31 |     @State private var password: String = ""
+ 32 |     @State private var errorMessage: String?
+ 33 |     @State private var isAuthenticating: Bool = false
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 34 |     @State private var authenticator: HermesAuthenticator?
+ 35 |
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthView.swift:34:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 32 |     @State private var errorMessage: String?
+ 33 |     @State private var isAuthenticating: Bool = false
+ 34 |     @State private var authenticator: HermesAuthenticator?
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 35 |
+ 36 |     public init(config: GatewayConfig, onAuthenticated: @escaping (GatewayCredentials) -> Void) {
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ChatView.swift:17:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 15 |     @Environment(\.transcriptStore) private var store
+ 16 |
+ 17 |     @State private var showingModelPicker = false
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 18 |     @State private var showingApproval = false
+ 19 |     @State private var showingCommands = false
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ChatView.swift:18:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 16 |
+ 17 |     @State private var showingModelPicker = false
+ 18 |     @State private var showingApproval = false
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 19 |     @State private var showingCommands = false
+ 20 |     @State private var pendingApproval: ApprovalRequest?
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ChatView.swift:19:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 17 |     @State private var showingModelPicker = false
+ 18 |     @State private var showingApproval = false
+ 19 |     @State private var showingCommands = false
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 20 |     @State private var pendingApproval: ApprovalRequest?
+ 21 |     @State private var modelOptions: [String: [String]] = [:]
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ChatView.swift:20:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 18 |     @State private var showingApproval = false
+ 19 |     @State private var showingCommands = false
+ 20 |     @State private var pendingApproval: ApprovalRequest?
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 21 |     @State private var modelOptions: [String: [String]] = [:]
+ 22 |     @State private var modelOptionsLoaded = false
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ChatView.swift:21:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 19 |     @State private var showingCommands = false
+ 20 |     @State private var pendingApproval: ApprovalRequest?
+ 21 |     @State private var modelOptions: [String: [String]] = [:]
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 22 |     @State private var modelOptionsLoaded = false
+ 23 |
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ChatView.swift:22:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 20 |     @State private var pendingApproval: ApprovalRequest?
+ 21 |     @State private var modelOptions: [String: [String]] = [:]
+ 22 |     @State private var modelOptionsLoaded = false
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 23 |
+ 24 |     var body: some View {
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ChatView.swift:17:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 15 |     @Environment(\.transcriptStore) private var store
+ 16 |
+ 17 |     @State private var showingModelPicker = false
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 18 |     @State private var showingApproval = false
+ 19 |     @State private var showingCommands = false
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ChatView.swift:18:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 16 |
+ 17 |     @State private var showingModelPicker = false
+ 18 |     @State private var showingApproval = false
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 19 |     @State private var showingCommands = false
+ 20 |     @State private var pendingApproval: ApprovalRequest?
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ChatView.swift:19:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 17 |     @State private var showingModelPicker = false
+ 18 |     @State private var showingApproval = false
+ 19 |     @State private var showingCommands = false
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 20 |     @State private var pendingApproval: ApprovalRequest?
+ 21 |     @State private var modelOptions: [String: [String]] = [:]
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ChatView.swift:20:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 18 |     @State private var showingApproval = false
+ 19 |     @State private var showingCommands = false
+ 20 |     @State private var pendingApproval: ApprovalRequest?
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 21 |     @State private var modelOptions: [String: [String]] = [:]
+ 22 |     @State private var modelOptionsLoaded = false
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ChatView.swift:21:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 19 |     @State private var showingCommands = false
+ 20 |     @State private var pendingApproval: ApprovalRequest?
+ 21 |     @State private var modelOptions: [String: [String]] = [:]
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 22 |     @State private var modelOptionsLoaded = false
+ 23 |
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ChatView.swift:22:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 20 |     @State private var pendingApproval: ApprovalRequest?
+ 21 |     @State private var modelOptions: [String: [String]] = [:]
+ 22 |     @State private var modelOptionsLoaded = false
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 23 |
+ 24 |     var body: some View {
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ComposerView.swift:13:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+11 |     let sessionID: String
+12 |
+13 |     @State private var text = ""
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+14 |     @State private var sending = false
+15 |
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ComposerView.swift:14:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+12 |
+13 |     @State private var text = ""
+14 |     @State private var sending = false
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+15 |
+16 |     var body: some View {
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ComposerView.swift:13:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+11 |     let sessionID: String
+12 |
+13 |     @State private var text = ""
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+14 |     @State private var sending = false
+15 |
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ComposerView.swift:14:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+12 |
+13 |     @State private var text = ""
+14 |     @State private var sending = false
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+15 |
+16 |     var body: some View {
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Commands/CommandsView.swift:14:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+12 |     let sessionID: String
+13 |
+14 |     @State private var categories: [CommandCategory] = []
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+15 |     @State private var isLoading = false
+16 |     @State private var executing = false
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Commands/CommandsView.swift:15:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+13 |
+14 |     @State private var categories: [CommandCategory] = []
+15 |     @State private var isLoading = false
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+16 |     @State private var executing = false
+17 |     @State private var execMessage: String?
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Commands/CommandsView.swift:16:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+14 |     @State private var categories: [CommandCategory] = []
+15 |     @State private var isLoading = false
+16 |     @State private var executing = false
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+17 |     @State private var execMessage: String?
+18 |
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Commands/CommandsView.swift:17:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+15 |     @State private var isLoading = false
+16 |     @State private var executing = false
+17 |     @State private var execMessage: String?
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+18 |
+19 |     var body: some View {
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Commands/CommandsView.swift:14:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+12 |     let sessionID: String
+13 |
+14 |     @State private var categories: [CommandCategory] = []
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+15 |     @State private var isLoading = false
+16 |     @State private var executing = false
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Commands/CommandsView.swift:15:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+13 |
+14 |     @State private var categories: [CommandCategory] = []
+15 |     @State private var isLoading = false
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+16 |     @State private var executing = false
+17 |     @State private var execMessage: String?
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Commands/CommandsView.swift:16:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+14 |     @State private var categories: [CommandCategory] = []
+15 |     @State private var isLoading = false
+16 |     @State private var executing = false
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+17 |     @State private var execMessage: String?
+18 |
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Commands/CommandsView.swift:17:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+15 |     @State private var isLoading = false
+16 |     @State private var executing = false
+17 |     @State private var execMessage: String?
+   |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+18 |
+19 |     var body: some View {
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Sidebar/SidebarView.swift:13:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 11 |     @Environment(\.gatewayConnection) private var gateway
+ 12 |
+ 13 |     @State private var sessions: [SessionListRow] = []
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 14 |     @State private var isLoading = false
+ 15 |
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Sidebar/SidebarView.swift:14:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 12 |
+ 13 |     @State private var sessions: [SessionListRow] = []
+ 14 |     @State private var isLoading = false
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 15 |
+ 16 |     var body: some View {
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Sidebar/SidebarView.swift:13:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 11 |     @Environment(\.gatewayConnection) private var gateway
+ 12 |
+ 13 |     @State private var sessions: [SessionListRow] = []
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 14 |     @State private var isLoading = false
+ 15 |
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+
+/Users/jon/IdeaProjects/HermesMobile/Sources/Views/Sidebar/SidebarView.swift:14:24: error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 12 |
+ 13 |     @State private var sessions: [SessionListRow] = []
+ 14 |     @State private var isLoading = false
+    |                        `- error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+ 15 |
+ 16 |     var body: some View {
+
+SwiftUI.State:1:145: note: 'State()' declared here
+1 | @attached(accessor, names: named(init), named(get), named(set)) @attached(peer, names: prefixed(`_`), prefixed(__), prefixed(`$`)) public macro State() = #externalMacro(module: "SwiftUIMacros", type: "StateMacro")
+  |                                                                                                                                                 `- note: 'State()' declared here
+Failed frontend command:
+/Users/jon/Library/Developer/Toolchains/swift-6.4.1-RELEASE.xctoolchain/usr/bin/swift-frontend -frontend -emit-module -experimental-skip-non-inlinable-function-bodies-without-types /Users/jon/IdeaProjects/HermesMobile/Sources/AppEnvironment.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Auth/AuthStore.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Auth/HermesAuthenticator.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Auth/OAuthPKCE.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Auth/WebSocketTicket.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Gateway/GatewayClient.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Gateway/GatewayConnection.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Gateway/JSONRPCError.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Gateway/JSONRPCFrame.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Gateway/JSONRPCRequest.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Gateway/ReconnectBackoff.swift /Users/jon/IdeaProjects/HermesMobile/Sources/HermesClient.swift /Users/jon/IdeaProjects/HermesMobile/Sources/HermesMobileApp.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Store/TranscriptStore.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthGateView.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Views/Auth/AuthView.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ChatView.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Views/Chat/ComposerView.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Views/Commands/CommandsView.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Views/RootView.swift /Users/jon/IdeaProjects/HermesMobile/Sources/Views/Sidebar/SidebarView.swift -target arm64-apple-macos14.0 -module-can-import-version AuthenticationServices 7625.1.29.11 0 -module-can-import-version CryptoKit 383.1.1 0 -load-resolved-plugin /Users/jon/Library/Developer/Toolchains/swift-6.4.1-RELEASE.xctoolchain/usr/lib/swift/host/plugins/libObservationMacros.dylib\#\#ObservationMacros -load-resolved-plugin /Users/jon/Library/Developer/Toolchains/swift-6.4.1-RELEASE.xctoolchain/usr/lib/swift/host/plugins/libSwiftMacros.dylib\#\#SwiftMacros -disable-implicit-swift-modules -Xcc -fno-implicit-modules -Xcc -fno-implicit-module-maps -explicit-swift-module-map-file /Users/jon/IdeaProjects/HermesMobile/.build/out/Intermediates.noindex/HermesMobile.build/Debug/HermesMobile-t.build/Objects-normal/arm64/HermesMobile-dependencies-1.json -Xllvm -aarch64-use-tbi -enable-objc-interop -sdk /Library/Developer/CommandLineTools/SDKs/MacOSX27.0.sdk -I /Users/jon/IdeaProjects/HermesMobile/.build/out/Products/Debug -Isystem /Library/Developer/CommandLineTools/Developer/usr/lib -Isystem /Users/jon/Library/Developer/Toolchains/swift-6.4.1-RELEASE.xctoolchain/usr/lib/swift/macosx/testing -F /Users/jon/IdeaProjects/HermesMobile/.build/out/Products/Debug/PackageFrameworks -F /Users/jon/IdeaProjects/HermesMobile/.build/out/Products/Debug -F /Users/jon/Library/Developer/Toolchains/swift-6.4.1-RELEASE.xctoolchain/Library/Developer/Frameworks -F /Library/Developer/CommandLineTools/Developer/Library/Frameworks -module-cache-path /Users/jon/IdeaProjects/HermesMobile/.build/out/Intermediates.noindex/SwiftExplicitPrecompiledModules -color-diagnostics -Xcc -fcolor-diagnostics -enable-testing -g -debug-info-format\=dwarf -dwarf-version\=4 -swift-version 5 -Onone -D SWIFT_PACKAGE -D DEBUG -D SWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE -D Xcode -serialize-debugging-options -enable-experimental-feature DebugDescriptionMacro -empty-abi-descriptor -validate-clang-modules-once -clang-build-session-file /Users/jon/IdeaProjects/HermesMobile/.build/out/ModuleCache.noindex/Session.modulevalidation -Xcc -working-directory -Xcc /Users/jon/IdeaProjects -enable-anonymous-context-mangled-names -file-compilation-dir /Users/jon/IdeaProjects -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -Xcc -I/Users/jon/IdeaProjects/HermesMobile/.build/out/Products/Debug/include -Xcc -I/Users/jon/IdeaProjects/HermesMobile/.build/out/Intermediates.noindex/HermesMobile.build/Debug/HermesMobile-t.build/DerivedSources-normal/arm64 -Xcc -I/Users/jon/IdeaProjects/HermesMobile/.build/out/Intermediates.noindex/HermesMobile.build/Debug/HermesMobile-t.build/DerivedSources/arm64 -Xcc -I/Users/jon/IdeaProjects/HermesMobile/.build/out/Intermediates.noindex/HermesMobile.build/Debug/HermesMobile-t.build/DerivedSources -Xcc -DSWIFT_PACKAGE -Xcc -DDEBUG\=1 -no-auto-bridging-header-chaining -module-name HermesMobile -package-name hermesmobile -const-gather-protocols-file /Users/jon/IdeaProjects/HermesMobile/.build/out/Intermediates.noindex/HermesMobile.build/Debug/HermesMobile-t.build/Objects-normal/arm64/HermesMobile_const_extract_protocols.json -in-process-plugin-server-path /Users/jon/Library/Developer/Toolchains/swift-6.4.1-RELEASE.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -clang-target arm64-apple-macos27.0 -target-sdk-version 27.0 -target-sdk-name macosx27.0 -emit-module-doc-path /Users/jon/IdeaProjects/HermesMobile/.build/out/Intermediates.noindex/HermesMobile.build/Debug/HermesMobile-t.build/Objects-normal/arm64/HermesMobile.swiftdoc -emit-module-source-info-path /Users/jon/IdeaProjects/HermesMobile/.build/out/Intermediates.noindex/HermesMobile.build/Debug/HermesMobile-t.build/Objects-normal/arm64/HermesMobile.swiftsourceinfo -emit-objc-header-path /Users/jon/IdeaProjects/HermesMobile/.build/out/Intermediates.noindex/HermesMobile.build/Debug/HermesMobile-t.build/Objects-normal/arm64/HermesMobile-Swift.h -serialize-diagnostics-path /Users/jon/IdeaProjects/HermesMobile/.build/out/Intermediates.noindex/HermesMobile.build/Debug/HermesMobile-t.build/Objects-normal/arm64/HermesMobile-primary-emit-module.dia -emit-dependencies-path /Users/jon/IdeaProjects/HermesMobile/.build/out/Intermediates.noindex/HermesMobile.build/Debug/HermesMobile-t.build/Objects-normal/arm64/HermesMobile-primary-emit-module.d -parse-as-library -o /Users/jon/IdeaProjects/HermesMobile/.build/out/Intermediates.noindex/HermesMobile.build/Debug/HermesMobile-t.build/Objects-normal/arm64/HermesMobile.swiftmodule -emit-abi-descriptor-path /Users/jon/IdeaProjects/HermesMobile/.build/out/Intermediates.noindex/HermesMobile.build/Debug/HermesMobile-t.build/Objects-normal/arm64/HermesMobile.abi.json
+
+error: Build failed
