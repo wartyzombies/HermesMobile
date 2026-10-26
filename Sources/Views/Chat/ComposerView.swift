@@ -108,24 +108,6 @@ struct ComposerView: View {
 
     // MARK: - Attachment staging
 
-    /// Stage a picked image as base64 bytes and inject its `refText` into the prompt.
-    @MainActor
-    private func stageImage(_ image: UIImage) {
-        Task {
-            attaching = true
-            defer { attaching = false }
-            do {
-                let result = try await attachImageBytes(image)
-                if let ref = result.refText {
-                    insertAttachment(ref)
-                }
-            } catch {
-                errorMessage = "Failed to attach image: \(error.localizedDescription)"
-            }
-        }
-    }
-
-    /// Stage a picked file via `client.attachFile` with the file's path.
     @MainActor
     private func stageFile(_ url: URL) {
         Task {
@@ -146,6 +128,24 @@ struct ComposerView: View {
                 }
             } catch {
                 errorMessage = "Failed to attach file: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    #if canImport(UIKit)
+    /// Stage a picked image as base64 bytes and inject its `refText` into the prompt.
+    @MainActor
+    private func stageImage(_ image: UIImage) {
+        Task {
+            attaching = true
+            defer { attaching = false }
+            do {
+                let result = try await attachImageBytes(image)
+                if let ref = result.refText {
+                    insertAttachment(ref)
+                }
+            } catch {
+                errorMessage = "Failed to attach image: \(error.localizedDescription)"
             }
         }
     }
@@ -173,6 +173,45 @@ struct ComposerView: View {
             ext: ext
         )
     }
+    #endif
+        Task {
+            attaching = true
+            defer { attaching = false }
+            do {
+                let result = try await attachImageBytes(image)
+                if let ref = result.refText {
+                    insertAttachment(ref)
+                }
+            } catch {
+                errorMessage = "Failed to attach image: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    /// Encode a `UIImage` to base64 and stage it via `client.attachImageBytes`.
+    private func attachImageBytes(_ image: UIImage) async throws -> AttachedImageResult {
+        let data: Data
+        let ext: String
+        if let png = image.pngData() {
+            data = png
+            ext = "png"
+        } else if let jpeg = image.jpegData(compressionQuality: 0.9) {
+            data = jpeg
+            ext = "jpg"
+        } else {
+            throw NSError(domain: "ComposerView", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unable to encode image"])
+        }
+        let base64 = data.base64EncodedString()
+        guard let client else {
+            throw NSError(domain: "ComposerView", code: -1, userInfo: [NSLocalizedDescriptionKey: "No client"])
+        }
+        return try await client.attachImageBytes(
+            sessionID: sessionID,
+            contentBase64: base64,
+            ext: ext
+        )
+    }
+    #endif
 
     // MARK: - Send
 
