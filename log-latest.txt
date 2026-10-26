@@ -1,21 +1,5 @@
 Building for debugging...
-[6 / 35] GeneratedModels
-[9 / 56]
-[13 / 56]
-[14 / 56]
-[15 / 56]
-[17 / 56]
-[19 / 56]
-[27 / 56] HermesLogger
-[33 / 62] GeneratedModels
-[35 / 62] GeneratedModels
-[37 / 64] HermesCoreWebSocket
-/Users/jon/Documents/GitHub/HermesMobile/Package.swift: HermesLogger: ld: warning: search path '/Users/jon/Library/Developer/Toolchains/swift-6.4.1-RELEASE.xctoolchain/Library/Developer/Frameworks' not found
-/Users/jon/Documents/GitHub/HermesMobile/Package.swift: HermesLogger: ld: warning: search path '/Library/Developer/CommandLineTools/Developer/Library/Frameworks' not found
-[42 / 63] HermesCoreWebSocket
-/Users/jon/Documents/GitHub/HermesMobile/Package.swift: HermesCoreWebSocket: ld: warning: search path '/Users/jon/Library/Developer/Toolchains/swift-6.4.1-RELEASE.xctoolchain/Library/Developer/Frameworks' not found
-/Users/jon/Documents/GitHub/HermesMobile/Package.swift: HermesCoreWebSocket: ld: warning: search path '/Library/Developer/CommandLineTools/Developer/Library/Frameworks' not found
-[45 / 63] GeneratedModels
+[2 / 14] GeneratedModels
 error: /Users/jon/Documents/GitHub/HermesMobile/Sources/Views/Chat/ComposerView.swift:177:9 expected 'func' keyword in instance method declaration: FixIt(sourceRange: SwiftBuild.SwiftBuildMessage.DiagnosticInfo.SourceRange(path: "/Users/jon/Documents/GitHub/HermesMobile/Sources/Views/Chat/ComposerView.swift", startLine: 177, startColumn: 9, endLine: 177, endColumn: 9), textToInsert: "func ")
 error: /Users/jon/Documents/GitHub/HermesMobile/Sources/Views/Chat/ComposerView.swift:177:14 expected '(' in argument list of function declaration: FixIt(sourceRange: SwiftBuild.SwiftBuildMessage.DiagnosticInfo.SourceRange(path: "/Users/jon/Documents/GitHub/HermesMobile/Sources/Views/Chat/ComposerView.swift", startLine: 177, startColumn: 13, endLine: 177, endColumn: 13), textToInsert: "()")
 error: /Users/jon/Documents/GitHub/HermesMobile/Sources/Views/Chat/ComposerView.swift:214:5 unexpected conditional compilation block terminator
