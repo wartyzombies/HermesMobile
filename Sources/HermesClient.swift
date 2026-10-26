@@ -254,6 +254,112 @@ public final class HermesClient {
         try await gateway.request(GWMethod.Profiles_list, params: .null)
     }
 
+    // MARK: - Attachments
+
+    /// Stage a non-image file into the session workspace and get back its
+    /// `@file:` ref text for injection into the next prompt.
+    ///
+    /// - Parameters:
+    ///   - sessionID: the session identifier.
+    ///   - profile: optional profile name.
+    ///   - path: a gateway-visible path to the file. If nil, pass bytes via
+    ///     `dataURL` (a `data:` URL).
+    ///   - dataURL: a `data:` URL carrying the file bytes (alternative to
+    ///     `path`).
+    ///   - name: an optional display name for the file.
+    /// - Returns: the attach result including `refText` to inject.
+    public func attachFile(
+        sessionID: String,
+        profile: String? = nil,
+        path: String? = nil,
+        dataURL: String? = nil,
+        name: String? = nil
+    ) async throws -> FileAttachResult {
+        var params: [String: JSONValue] = [
+            "session_id": .string(sessionID),
+        ]
+        if let profile { params["profile"] = .string(profile) }
+        if let path { params["path"] = .string(path) }
+        if let dataURL { params["data_url"] = .string(dataURL) }
+        if let name { params["name"] = .string(name) }
+        return try await gateway.request(
+            GWMethod.File_attach,
+            params: .object(params)
+        )
+    }
+
+    /// Stage an image from a gateway-visible path into the session.
+    public func attachImage(
+        sessionID: String,
+        path: String,
+        profile: String? = nil
+    ) async throws -> AttachedImageResult {
+        var params: [String: JSONValue] = [
+            "session_id": .string(sessionID),
+            "path": .string(path),
+        ]
+        if let profile { params["profile"] = .string(profile) }
+        return try await gateway.request(
+            GWMethod.Image_attach,
+            params: .object(params)
+        )
+    }
+
+    /// Stage image bytes (base64) into the session.
+    public func attachImageBytes(
+        sessionID: String,
+        contentBase64: String,
+        profile: String? = nil,
+        filename: String? = nil,
+        ext: String? = nil
+    ) async throws -> AttachedImageResult {
+        var params: [String: JSONValue] = [
+            "session_id": .string(sessionID),
+            "content_base64": .string(contentBase64),
+        ]
+        if let profile { params["profile"] = .string(profile) }
+        if let filename { params["filename"] = .string(filename) }
+        if let ext { params["ext"] = .string(ext) }
+        return try await gateway.request(
+            GWMethod.Image_attach_bytes,
+            params: .object(params)
+        )
+    }
+
+    /// Detach a previously attached image.
+    public func detachImage(
+        sessionID: String,
+        path: String,
+        profile: String? = nil
+    ) async throws -> ImageDetachResult {
+        var params: [String: JSONValue] = [
+            "session_id": .string(sessionID),
+            "path": .string(path),
+        ]
+        if let profile { params["profile"] = .string(profile) }
+        return try await gateway.request(
+            GWMethod.Image_detach,
+            params: .object(params)
+        )
+    }
+
+    /// Stage a PDF into the session workspace.
+    public func attachPDF(
+        sessionID: String,
+        path: String,
+        profile: String? = nil
+    ) async throws -> PdfAttachResult {
+        var params: [String: JSONValue] = [
+            "session_id": .string(sessionID),
+            "path": .string(path),
+        ]
+        if let profile { params["profile"] = .string(profile) }
+        return try await gateway.request(
+            GWMethod.Pdf_attach,
+            params: .object(params)
+        )
+    }
+
     // MARK: - Approvals
 
     /// Tell the backend that the approval card is on screen, so its timeout
