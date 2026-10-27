@@ -2,8 +2,10 @@ import SwiftUI
 
 #if canImport(UIKit)
 import MobileCoreServices
-import PHPicker
 import UniformTypeIdentifiers
+#endif
+#if canImport(PhotosUI)
+import PhotosUI
 #endif
 
 import GeneratedModels
@@ -38,7 +40,7 @@ struct ComposerView: View {
             .padding()
         }
         .sheet(isPresented: $showingPicker) {
-            #if canImport(UIKit)
+            #if canImport(UIKit) && canImport(PhotosUI)
             ImagePicker { result in
                 switch result {
                 case .success(let image): Task { await stageImage(image) }
@@ -50,7 +52,7 @@ struct ComposerView: View {
         .fileImporter(isPresented: $showingFileImporter, allowedContentTypes: [.item, .pdf, .text, .image], allowsMultipleSelection: false) { result in
             switch result {
             case .success(let urls):
-                if let url = urls.first { Task { await stageFile(url) } }
+                if let url = urls.first { Task { stageFile(url) } }
             case .failure(let error):
                 errorMessage = error.localizedDescription
             }
@@ -93,7 +95,8 @@ struct ComposerView: View {
             do {
                 guard let client else { errorMessage = "No gateway client connected"; return }
                 let result = try await client.attachFile(sessionID: sessionID, path: url.path, name: url.lastPathComponent)
-                if let ref = result.refText, !ref.isEmpty { insertAttachment(ref) }
+                let ref = result.refText
+                if !ref.isEmpty { insertAttachment(ref) }
             } catch {
                 errorMessage = "Failed to attach file: \(error.localizedDescription)"
             }
@@ -121,7 +124,7 @@ struct ComposerView: View {
     }
 }
 
-#if canImport(UIKit)
+#if canImport(UIKit) && canImport(PhotosUI)
 private struct ImagePicker: UIViewControllerRepresentable {
     enum PickError: Error { case noImage }
     let onSelect: (Result<UIImage, Error>) -> Void
