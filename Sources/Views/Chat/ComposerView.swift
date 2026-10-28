@@ -29,12 +29,13 @@ struct ComposerView: View {
             }
             HStack(alignment: .bottom) {
                 Button { showingPicker = true } label: { Image(systemName: "photo").font(.title3) }
-                    .help("Attach image").disabled(sending || attaching)
+                    .help("Attach image").accessibilityLabel("Attach image").disabled(sending || attaching)
                 Button { showingFileImporter = true } label: { Image(systemName: "doc.badge.plus").font(.title3) }
-                    .help("Attach file").disabled(sending || attaching)
+                    .help("Attach file").accessibilityLabel("Attach file").disabled(sending || attaching)
                 TextField("Message Hermes…", text: $text, axis: .vertical)
                     .lineLimit(1...6).textFieldStyle(.roundedBorder).disabled(sending)
                 Button { Task { await send() } } label: { Image(systemName: "arrow.up.circle.fill").font(.title2) }
+                    .accessibilityLabel("Send message")
                     .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || sending || attaching)
             }
             .padding()

@@ -62,7 +62,7 @@ Desktop three-party architecture (Shell / Renderer / Backend) over the
 ### M5 — Polish
 - [x] Dark mode / dynamic color
 - [x] iPad multitasking
-- [ ] Accessibility (VoiceOver, Dynamic Type)
+- [x] Accessibility (VoiceOver, Dynamic Type)
 - [ ] File attachment
 
 ## Test environment
