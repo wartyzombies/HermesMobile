@@ -13,6 +13,7 @@ struct RootView: View {
                 } detail: {
                     ChatView()
                 }
+                .navigationSplitViewStyle(.balanced)
             } else {
                 AuthGateView()
             }
