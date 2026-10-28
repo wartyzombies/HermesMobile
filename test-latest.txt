@@ -1,0 +1,62 @@
+Building for debugging...
+[Constructing description]
+[Planning deferred tasks]
+[2 / 17]
+[4 / 10] HermesMobileTests-product
+[13 / 115]
+[18 / 115]
+[26 / 115]
+[28 / 115]
+[29 / 115]
+[34 / 115]
+[38 / 115]
+[42 / 115]
+[48 / 115]
+[51 / 115]
+[53 / 115]
+[54 / 115]
+[65 / 115]
+[69 / 115]
+[73 / 115]
+[74 / 115]
+[78 / 115]
+[85 / 115]
+[88 / 115]
+[90 / 115]
+[94 / 115]
+[96 / 115]
+[97 / 115]
+[98 / 115]
+[102 / 115]
+[104 / 115]
+[106 / 115]
+[109 / 115] HermesMobileTests-product
+[114 / 118] HermesMobileTests-product
+[116 / 118] HermesMobileTests-product
+[118 / 118] HermesMobileTests-product
+Build complete! (14.27 secs)
+Test Suite 'All tests' started at 2026-10-28 21:13:33.544.
+Test Suite 'HermesMobileTests.xctest' started at 2026-10-28 21:13:33.546.
+Test Suite 'HermesMobileTests' started at 2026-10-28 21:13:33.546.
+Test Case '-[HermesMobileTests.HermesMobileTests testClientStartsIdle]' started.
+Test Case '-[HermesMobileTests.HermesMobileTests testClientStartsIdle]' passed (0.002 seconds).
+Test Case '-[HermesMobileTests.HermesMobileTests testJSONIDKeyIsStable]' started.
+Test Case '-[HermesMobileTests.HermesMobileTests testJSONIDKeyIsStable]' passed (0.000 seconds).
+Test Case '-[HermesMobileTests.HermesMobileTests testJSONValueRoundTrip]' started.
+Test Case '-[HermesMobileTests.HermesMobileTests testJSONValueRoundTrip]' passed (0.000 seconds).
+Test Case '-[HermesMobileTests.HermesMobileTests testNotificationFrameDecodes]' started.
+Test Case '-[HermesMobileTests.HermesMobileTests testNotificationFrameDecodes]' passed (0.000 seconds).
+Test Case '-[HermesMobileTests.HermesMobileTests testReconnectBackoffIsBounded]' started.
+Test Case '-[HermesMobileTests.HermesMobileTests testReconnectBackoffIsBounded]' passed (0.001 seconds).
+Test Case '-[HermesMobileTests.HermesMobileTests testReconnectBackoffZeroBaseIsSafe]' started.
+Test Case '-[HermesMobileTests.HermesMobileTests testReconnectBackoffZeroBaseIsSafe]' passed (0.000 seconds).
+Test Suite 'HermesMobileTests' passed at 2026-10-28 21:13:33.550.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.003 (0.004) seconds
+Test Suite 'HermesMobileTests.xctest' passed at 2026-10-28 21:13:33.550.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.003 (0.004) seconds
+Test Suite 'All tests' passed at 2026-10-28 21:13:33.550.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.003 (0.007) seconds
+◇ Test run started.
+↳ Testing Library Version: 2084
+↳ Target Platform: arm64e-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.
