@@ -63,7 +63,7 @@ Desktop three-party architecture (Shell / Renderer / Backend) over the
 - [x] Dark mode / dynamic color
 - [x] iPad multitasking
 - [x] Accessibility (VoiceOver, Dynamic Type)
-- [ ] File attachment
+- [x] File attachment
 
 ## Test environment
 
