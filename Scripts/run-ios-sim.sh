@@ -172,6 +172,9 @@ if ! xcodebuild \
     -configuration Debug \
     -destination 'generic/platform=iOS Simulator' \
     -derivedDataPath "$DD" \
+    OBJROOT="$DD/Build/Intermediates.noindex" \
+    SYMROOT="$DD/Build/Products" \
+    SHARED_PRECOMPS_DIR="$DD/Build/Intermediates.noindex/PrecompiledHeaders" \
     ARCHS="$ARCH" \
     ONLY_ACTIVE_ARCH=YES \
     build >"$BUILD_LOG" 2>&1; then
@@ -181,30 +184,18 @@ fi
 
 # MARK: - Collect the module objects
 
-# xcodebuild emits one merged object per Swift target under
-# <DerivedData>/Build/Intermediates.noindex/.../<Module>.build/Objects-normal/<arch>/.
-# Collect every object in each module's directory so per-file compilation also works.
+# xcodebuild emits the module objects under
+# <DerivedData>/Build/Intermediates.noindex/.../Debug-iphonesimulator/<Target>.build/
+# (or <Target>-t.build for package targets)/Objects-normal/<arch>/. The per-target
+# directory name is an Xcode implementation detail, so collect every object for
+# this architecture instead of guessing names. Merged-per-module and per-file
+# compilation both produce `.o` files here.
 OBJECTS=()
-for module in HermesMobile GeneratedModels HermesLogger; do
-    while IFS= read -r dir; do
-        [[ -n $dir ]] || continue
-        while IFS= read -r obj; do
-            OBJECTS+=("$obj")
-        done < <(find "$dir" -type f -name '*.o' 2>/dev/null)
-    done < <(find "$DD/Build/Intermediates.noindex" -type d \
-        -path "*/Debug-iphonesimulator/${module}.build/Objects-normal/${ARCH}*" 2>/dev/null)
-done
-
-if ((${#OBJECTS[@]} == 0)); then
-    # Fallback: any module objects for this architecture, whatever the layout.
-    while IFS= read -r dir; do
-        [[ -n $dir ]] || continue
-        while IFS= read -r obj; do
-            OBJECTS+=("$obj")
-        done < <(find "$dir" -type f -name '*.o' 2>/dev/null)
-    done < <(find "$DD/Build/Intermediates.noindex" -type d \
-        -path "*/Debug-iphonesimulator/*/Objects-normal/${ARCH}*" 2>/dev/null)
-fi
+while IFS= read -r obj; do
+    OBJECTS+=("$obj")
+done < <(find "$DD/Build/Intermediates.noindex" \
+    -type f -name '*.o' \
+    -path "*/Debug-iphonesimulator/*/Objects-normal/${ARCH}*" 2>/dev/null | sort -u)
 
 ((${#OBJECTS[@]} > 0)) || die \
     "xcodebuild produced no object files for $ARCH (see $BUILD_LOG)"

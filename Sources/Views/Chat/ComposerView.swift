@@ -69,7 +69,11 @@ struct ComposerView: View {
             defer { attaching = false }
             do {
                 let result = try await attachImageBytes(image)
-                if let ref = result.refText { insertAttachment(ref) }
+                // `image.attach_bytes` queues the image for the next turn; unlike
+                // `file.attach` it returns no ref text to inject into the prompt.
+                if !result.attached {
+                    errorMessage = result.message ?? "The gateway did not attach the image"
+                }
             } catch {
                 errorMessage = "Failed to attach image: \(error.localizedDescription)"
             }
