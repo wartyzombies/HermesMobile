@@ -17,5 +17,6 @@ struct RootView: View {
                 AuthGateView()
             }
         }
+        .preferredColorScheme(nil)
     }
 }

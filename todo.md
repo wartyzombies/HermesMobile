@@ -60,7 +60,7 @@ Desktop three-party architecture (Shell / Renderer / Backend) over the
 - [x] Composer send → `prompt.submit`
 
 ### M5 — Polish
-- [ ] Dark mode / dynamic color
+- [x] Dark mode / dynamic color
 - [ ] iPad multitasking
 - [ ] Accessibility (VoiceOver, Dynamic Type)
 - [ ] File attachment
