@@ -10,9 +10,14 @@ import PhotosUI
 
 import GeneratedModels
 
+/// Composer view for drafting and sending a message to the Hermes gateway.
+///
+/// Supports attaching images and files, which are staged on the gateway before
+/// being referenced in the submitted prompt.
 struct ComposerView: View {
     @Environment(\.hermesClient) private var client
 
+    /// Identifier of the session the composed message targets.
     let sessionID: String
 
     @State private var text = ""
@@ -63,6 +68,7 @@ struct ComposerView: View {
     // MARK: - Attachment staging
 
     #if canImport(UIKit)
+    /// Stages an image attachment on the gateway for the current session.
     @MainActor
     private func stageImage(_ image: UIImage) async {
         attaching = true
@@ -79,6 +85,7 @@ struct ComposerView: View {
         }
     }
 
+    /// Encodes the image and uploads it via the gateway client.
     private func attachImageBytes(_ image: UIImage) async throws -> AttachedImageResult {
         let data: Data
         let ext: String
@@ -90,6 +97,7 @@ struct ComposerView: View {
     }
     #endif
 
+    /// Stages a file attachment on the gateway for the current session.
     @MainActor
     private func stageFile(_ url: URL) async {
         attaching = true
@@ -106,6 +114,7 @@ struct ComposerView: View {
 
     // MARK: - Send
 
+    /// Submits the composed prompt to the gateway and clears the input on success.
     private func send() async {
         let prompt = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !prompt.isEmpty, let client else { return }
@@ -126,6 +135,7 @@ struct ComposerView: View {
 }
 
 #if canImport(UIKit) && canImport(PhotosUI)
+/// A `UIViewControllerRepresentable` wrapping `PHPickerViewController` for image selection.
 private struct ImagePicker: UIViewControllerRepresentable {
     enum PickError: Error { case noImage }
     let onSelect: (Result<UIImage, Error>) -> Void
@@ -155,3 +165,4 @@ private struct ImagePicker: UIViewControllerRepresentable {
     }
 }
 #endif
+""", "path": "/opt/data/profiles/coder/cache/scratch/HermesMobile/Sources/Views/Chat/ComposerView.swift"}
