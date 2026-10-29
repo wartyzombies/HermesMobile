@@ -53,7 +53,7 @@ struct ComposerView: View {
         .fileImporter(isPresented: $showingFileImporter, allowedContentTypes: [.item, .pdf, .text, .image], allowsMultipleSelection: false) { result in
             switch result {
             case .success(let urls):
-                if let url = urls.first { Task { stageFile(url) } }
+                if let url = urls.first { Task { await stageFile(url) } }
             case .failure(let error):
                 errorMessage = error.localizedDescription
             }
@@ -64,20 +64,18 @@ struct ComposerView: View {
 
     #if canImport(UIKit)
     @MainActor
-    private func stageImage(_ image: UIImage) {
-        Task {
-            attaching = true
-            defer { attaching = false }
-            do {
-                let result = try await attachImageBytes(image)
-                // `image.attach_bytes` queues the image for the next turn; unlike
-                // `file.attach` it returns no ref text to inject into the prompt.
-                if !result.attached {
-                    errorMessage = result.message ?? "The gateway did not attach the image"
-                }
-            } catch {
-                errorMessage = "Failed to attach image: \(error.localizedDescription)"
+    private func stageImage(_ image: UIImage) async {
+        attaching = true
+        defer { attaching = false }
+        do {
+            let result = try await attachImageBytes(image)
+            // `image.attach_bytes` queues the image for the next turn; unlike
+            // `file.attach` it returns no ref text to inject into the prompt.
+            if !result.attached {
+                errorMessage = result.message ?? "The gateway did not attach the image"
             }
+        } catch {
+            errorMessage = "Failed to attach image: \(error.localizedDescription)"
         }
     }
 
@@ -93,18 +91,16 @@ struct ComposerView: View {
     #endif
 
     @MainActor
-    private func stageFile(_ url: URL) {
-        Task {
-            attaching = true
-            defer { attaching = false }
-            do {
-                guard let client else { errorMessage = "No gateway client connected"; return }
-                let result = try await client.attachFile(sessionID: sessionID, path: url.path, name: url.lastPathComponent)
-                let ref = result.refText
-                if !ref.isEmpty { insertAttachment(ref) }
-            } catch {
-                errorMessage = "Failed to attach file: \(error.localizedDescription)"
-            }
+    private func stageFile(_ url: URL) async {
+        attaching = true
+        defer { attaching = false }
+        do {
+            guard let client else { errorMessage = "No gateway client connected"; return }
+            let result = try await client.attachFile(sessionID: sessionID, path: url.path, name: url.lastPathComponent)
+            let ref = result.refText
+            if !ref.isEmpty { insertAttachment(ref) }
+        } catch {
+            errorMessage = "Failed to attach file: \(error.localizedDescription)"
         }
     }
 

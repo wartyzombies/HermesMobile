@@ -1,2 +1,15 @@
 Building for debugging...
-Build complete! (0.44 secs)
+[Starting]
+[1 / 11]
+[2 / 6] HermesMobile
+[4 / 22]
+[6 / 22]
+[7 / 22]
+[8 / 22]
+[9 / 22]
+[12 / 22]
+[13 / 22]
+[15 / 22]
+[18 / 22] HermesMobile
+[24 / 25] HermesMobile
+Build complete! (10.13 secs)
