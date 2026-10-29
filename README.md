@@ -2,7 +2,7 @@
 
 A native iOS client for the [`hermes serve`](https://hermes-agent.nousresearch.com/docs/user-guide/desktop) gateway, built as a Swift Package. It mirrors the Hermes Desktop three-party architecture — **Shell** (SwiftUI app) / **Renderer** (SwiftUI views) / **Backend** (the remote `hermes serve` process) — and speaks the `tui_gateway` JSON-RPC 2.0 protocol over a secure WebSocket.
 
-> **Status:** scaffold, but it **builds and tests cleanly** as of 2026-10-16 (`swift build`, `swift test` 6/6, and `xcodebuild` for the iOS Simulator and macOS schemes — all pass with zero warnings). The transport, correlation, heartbeat, and reconnect-replay logic are implemented; the SwiftUI views are placeholders wired to a working `HermesClient`. Auth is still a placeholder and the transcript store is not yet subscribed to the transport — see [`fixes.md`](fixes.md) Round 2 and [`todo.md`](todo.md) for the open items and the full milestone plan.
+> **Status:** M5 Polish complete as of 2026-10-29 (`swift build`, `swift test` pass). Transport, correlation, heartbeat, reconnect-replay, transcript store, composer send, and gateway connect are implemented. Auth (OAuth-PKCE / basic) remains a placeholder tracked in [`todo.md`](todo.md) (M3) and [`fixes.md`](fixes.md) F4/F6.
 
 ---
 
