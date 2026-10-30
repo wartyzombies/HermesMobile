@@ -165,4 +165,3 @@ private struct ImagePicker: UIViewControllerRepresentable {
     }
 }
 #endif
-""", "path": "/opt/data/profiles/coder/cache/scratch/HermesMobile/Sources/Views/Chat/ComposerView.swift"}
