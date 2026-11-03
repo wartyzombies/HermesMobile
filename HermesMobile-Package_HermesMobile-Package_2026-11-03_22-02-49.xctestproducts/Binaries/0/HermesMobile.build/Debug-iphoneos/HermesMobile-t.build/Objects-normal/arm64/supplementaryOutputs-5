@@ -1,0 +1,23 @@
+{
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Gateway/GatewayConnection.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/GatewayConnection.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/GatewayConnection.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/GatewayConnection.dia",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/GatewayConnection.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/GatewayConnection.swiftdeps"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Gateway/JSONRPCError.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/JSONRPCError.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/JSONRPCError.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/JSONRPCError.dia",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/JSONRPCError.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/JSONRPCError.swiftdeps"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Gateway/JSONRPCFrame.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/JSONRPCFrame.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/JSONRPCFrame.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/JSONRPCFrame.dia",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/JSONRPCFrame.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/JSONRPCFrame.swiftdeps"
+  }
+}

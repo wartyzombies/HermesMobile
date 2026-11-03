@@ -1,0 +1,77 @@
+{
+  "buildCommand" : {
+    "command" : "build",
+    "skipDependencies" : false,
+    "style" : "buildOnly"
+  },
+  "configuredTargets" : [
+    {
+      "guid" : "PACKAGE-PRODUCT:hermesmobile_HermesMobileTests.HermesMobileTests"
+    },
+    {
+      "guid" : "PACKAGE-PRODUCT:hermesmobile_HermesMobile.HermesMobile"
+    },
+    {
+      "guid" : "PACKAGE-PRODUCT:hermesmobile_HermesCoreWebSocket.HermesCoreWebSocket"
+    },
+    {
+      "guid" : "PACKAGE-PRODUCT:hermesmobile_GeneratedModels.GeneratedModels"
+    }
+  ],
+  "containerPath" : "/Users/jon/Documents/GitHub/HermesMobile",
+  "continueBuildingAfterErrors" : false,
+  "dependencyScope" : "workspace",
+  "enableIndexBuildArena" : false,
+  "hideShellScriptEnvironment" : false,
+  "parameters" : {
+    "action" : "build",
+    "activeArchitecture" : "arm64",
+    "activeRunDestination" : {
+      "disableOnlyActiveArch" : false,
+      "hostTargetedPlatform" : null,
+      "platform" : "iphoneos",
+      "sdk" : "iphoneos27.2",
+      "sdkVariant" : "iphoneos",
+      "supportedArchitectures" : [
+        "arm64e",
+        "arm64"
+      ],
+      "targetArchitecture" : "arm64"
+    },
+    "arenaInfo" : {
+      "buildIntermediatesPath" : "/Volumes/Z Slim/xcode/Builds/Inter",
+      "buildProductsPath" : "/Volumes/Z Slim/xcode/Builds/Inter",
+      "derivedDataPath" : "/Users/jon/Library/Developer/Xcode/DerivedData",
+      "indexDataStoreFolderPath" : "/Users/jon/Library/Developer/Xcode/DerivedData/HermesMobile-guyxsoojhascunbsvgssjcdnicux/Index.noindex/DataStore",
+      "indexEnableDataStore" : true,
+      "indexPCHPath" : "/Users/jon/Library/Developer/Xcode/DerivedData/HermesMobile-guyxsoojhascunbsvgssjcdnicux/Index.noindex/PrecompiledHeaders",
+      "pchPath" : "/Volumes/Z Slim/xcode/Builds/Inter/PrecompiledHeaders"
+    },
+    "configurationName" : "Debug",
+    "overrides" : {
+      "synthesized" : {
+        "table" : {
+          "ASSETCATALOG_FILTER_FOR_DEVICE_MODEL" : "iPhone14,7",
+          "ASSETCATALOG_FILTER_FOR_DEVICE_OS_VERSION" : "27.0.1",
+          "ASSETCATALOG_FILTER_FOR_THINNING_DEVICE_CONFIGURATION" : "iPhone14,7",
+          "BUILD_ACTIVE_RESOURCES_ONLY" : "YES",
+          "CLANG_COVERAGE_MAPPING" : "YES",
+          "CLANG_PROFILE_DATA_DIRECTORY" : "/Volumes/Z Slim/xcode/Builds/Inter/CodeCoverage/ProfileData",
+          "ENABLE_PREVIEWS" : "NO",
+          "ENABLE_XOJIT_PREVIEWS" : "YES",
+          "ONLY_ACTIVE_ARCH" : "YES",
+          "TARGET_DEVICE_IDENTIFIER" : "00008110-001E11580179401E",
+          "TARGET_DEVICE_MODEL" : "iPhone14,7",
+          "TARGET_DEVICE_OS_VERSION" : "27.0.1",
+          "TARGET_DEVICE_PLATFORM_NAME" : "iphoneos"
+        }
+      }
+    }
+  },
+  "schemeCommand" : "test",
+  "showNonLoggedProgress" : true,
+  "useDryRun" : false,
+  "useImplicitDependencies" : true,
+  "useLegacyBuildLocations" : false,
+  "useParallelTargets" : true
+}

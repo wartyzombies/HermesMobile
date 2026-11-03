@@ -1,0 +1,19 @@
+{
+  "" : {
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesLogger-t.build/Objects-normal/arm64/HermesLogger-primary.dia",
+    "emit-module-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesLogger-t.build/Objects-normal/arm64/HermesLogger-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesLogger-t.build/Objects-normal/arm64/HermesLogger-primary-emit-module.dia",
+    "pch" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesLogger-t.build/Objects-normal/arm64/HermesLogger-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesLogger-t.build/Objects-normal/arm64/HermesLogger-primary.swiftdeps"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/HermesLogger/HermesLogger.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesLogger-t.build/Objects-normal/arm64/HermesLogger.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesLogger-t.build/Objects-normal/arm64/HermesLogger.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesLogger-t.build/Objects-normal/arm64/HermesLogger.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphoneos/HermesLogger-t.build/Objects-normal/arm64/HermesLogger.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesLogger-t.build/Objects-normal/arm64/HermesLogger.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesLogger-t.build/Objects-normal/arm64/HermesLogger.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesLogger-t.build/Objects-normal/arm64/HermesLogger.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesLogger-t.build/Objects-normal/arm64/HermesLogger~partial.swiftmodule"
+  }
+}

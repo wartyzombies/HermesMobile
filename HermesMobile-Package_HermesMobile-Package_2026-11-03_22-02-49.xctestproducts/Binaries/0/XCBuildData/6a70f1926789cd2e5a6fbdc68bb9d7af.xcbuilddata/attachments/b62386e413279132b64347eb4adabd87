@@ -1,0 +1,19 @@
+{
+  "" : {
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobileTests-p.build/Objects-normal/arm64/HermesMobileTests-primary.dia",
+    "emit-module-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobileTests-p.build/Objects-normal/arm64/HermesMobileTests-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobileTests-p.build/Objects-normal/arm64/HermesMobileTests-primary-emit-module.dia",
+    "pch" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobileTests-p.build/Objects-normal/arm64/HermesMobileTests-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobileTests-p.build/Objects-normal/arm64/HermesMobileTests-primary.swiftdeps"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Tests/HermesMobileTests.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobileTests-p.build/Objects-normal/arm64/HermesMobileTests.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobileTests-p.build/Objects-normal/arm64/HermesMobileTests.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobileTests-p.build/Objects-normal/arm64/HermesMobileTests.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphoneos/HermesMobileTests-p.build/Objects-normal/arm64/HermesMobileTests.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobileTests-p.build/Objects-normal/arm64/HermesMobileTests.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobileTests-p.build/Objects-normal/arm64/HermesMobileTests.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobileTests-p.build/Objects-normal/arm64/HermesMobileTests.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobileTests-p.build/Objects-normal/arm64/HermesMobileTests~partial.swiftmodule"
+  }
+}

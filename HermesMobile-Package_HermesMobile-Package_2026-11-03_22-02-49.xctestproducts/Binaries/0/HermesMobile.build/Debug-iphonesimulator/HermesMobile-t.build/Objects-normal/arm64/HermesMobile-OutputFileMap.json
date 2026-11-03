@@ -1,0 +1,219 @@
+{
+  "" : {
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesMobile-primary.dia",
+    "emit-module-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesMobile-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesMobile-primary-emit-module.dia",
+    "pch" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesMobile-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesMobile-primary.swiftdeps"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/AppEnvironment.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AppEnvironment.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AppEnvironment.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AppEnvironment.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AppEnvironment.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AppEnvironment.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AppEnvironment.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AppEnvironment.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AppEnvironment~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Auth/AuthStore.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthStore.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthStore.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthStore.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthStore.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthStore.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthStore.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthStore.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthStore~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Auth/HermesAuthenticator.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesAuthenticator.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesAuthenticator.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesAuthenticator.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesAuthenticator.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesAuthenticator.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesAuthenticator.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesAuthenticator.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesAuthenticator~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Auth/OAuthPKCE.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/OAuthPKCE.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/OAuthPKCE.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/OAuthPKCE.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/OAuthPKCE.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/OAuthPKCE.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/OAuthPKCE.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/OAuthPKCE.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/OAuthPKCE~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Auth/WebSocketTicket.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/WebSocketTicket.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/WebSocketTicket.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/WebSocketTicket.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/WebSocketTicket.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/WebSocketTicket.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/WebSocketTicket.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/WebSocketTicket.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/WebSocketTicket~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Gateway/GatewayClient.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/GatewayClient.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/GatewayClient.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/GatewayClient.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/GatewayClient.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/GatewayClient.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/GatewayClient.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/GatewayClient.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/GatewayClient~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Gateway/GatewayConnection.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/GatewayConnection.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/GatewayConnection.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/GatewayConnection.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/GatewayConnection.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/GatewayConnection.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/GatewayConnection.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/GatewayConnection.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/GatewayConnection~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Gateway/JSONRPCError.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCError.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCError.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCError.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCError.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCError.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCError.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCError.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCError~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Gateway/JSONRPCFrame.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCFrame.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCFrame.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCFrame.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCFrame.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCFrame.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCFrame.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCFrame.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCFrame~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Gateway/JSONRPCRequest.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCRequest.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCRequest.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCRequest.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCRequest.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCRequest.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCRequest.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCRequest.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/JSONRPCRequest~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Gateway/ReconnectBackoff.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ReconnectBackoff.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ReconnectBackoff.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ReconnectBackoff.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ReconnectBackoff.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ReconnectBackoff.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ReconnectBackoff.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ReconnectBackoff.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ReconnectBackoff~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/HermesClient.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesClient.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesClient.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesClient.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesClient.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesClient.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesClient.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesClient.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesClient~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/HermesMobileApp.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesMobileApp.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesMobileApp.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesMobileApp.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesMobileApp.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesMobileApp.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesMobileApp.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesMobileApp.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/HermesMobileApp~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Store/TranscriptStore.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/TranscriptStore.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/TranscriptStore.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/TranscriptStore.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/TranscriptStore.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/TranscriptStore.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/TranscriptStore.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/TranscriptStore.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/TranscriptStore~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Views/Auth/AuthGateView.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthGateView.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthGateView.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthGateView.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthGateView.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthGateView.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthGateView.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthGateView.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthGateView~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Views/Auth/AuthView.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthView.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthView.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthView.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthView.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthView.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthView.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthView.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/AuthView~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Views/Chat/ChatView.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ChatView.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ChatView.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ChatView.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ChatView.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ChatView.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ChatView.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ChatView.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ChatView~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Views/Chat/ComposerView.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ComposerView.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ComposerView.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ComposerView.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ComposerView.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ComposerView.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ComposerView.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ComposerView.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/ComposerView~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Views/Commands/CommandsView.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/CommandsView.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/CommandsView.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/CommandsView.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/CommandsView.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/CommandsView.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/CommandsView.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/CommandsView.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/CommandsView~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Views/RootView.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/RootView.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/RootView.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/RootView.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/RootView.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/RootView.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/RootView.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/RootView.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/RootView~partial.swiftmodule"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Views/Sidebar/SidebarView.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/SidebarView.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/SidebarView.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/SidebarView.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/SidebarView.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/SidebarView.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/SidebarView.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/SidebarView.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphonesimulator/HermesMobile-t.build/Objects-normal/arm64/SidebarView~partial.swiftmodule"
+  }
+}

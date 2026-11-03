@@ -1,0 +1,17 @@
+Target dependency graph (7 targets)
+Target 'GeneratedModels-product' in project 'HermesMobile'
+➜ Explicit dependency on target 'GeneratedModels' in project 'HermesMobile'
+Target 'HermesCoreWebSocket-product' in project 'HermesMobile'
+➜ Explicit dependency on target 'HermesCoreWebSocket' in project 'HermesMobile'
+➜ Explicit dependency on target 'HermesLogger' in project 'HermesMobile'
+Target 'HermesCoreWebSocket' in project 'HermesMobile'
+➜ Explicit dependency on target 'HermesLogger' in project 'HermesMobile'
+Target 'HermesMobile-product' in project 'HermesMobile'
+➜ Explicit dependency on target 'HermesMobile' in project 'HermesMobile'
+➜ Explicit dependency on target 'GeneratedModels' in project 'HermesMobile'
+➜ Explicit dependency on target 'HermesLogger' in project 'HermesMobile'
+Target 'HermesMobile' in project 'HermesMobile'
+➜ Explicit dependency on target 'GeneratedModels' in project 'HermesMobile'
+➜ Explicit dependency on target 'HermesLogger' in project 'HermesMobile'
+Target 'HermesLogger' in project 'HermesMobile' (no dependencies)
+Target 'GeneratedModels' in project 'HermesMobile' (no dependencies)

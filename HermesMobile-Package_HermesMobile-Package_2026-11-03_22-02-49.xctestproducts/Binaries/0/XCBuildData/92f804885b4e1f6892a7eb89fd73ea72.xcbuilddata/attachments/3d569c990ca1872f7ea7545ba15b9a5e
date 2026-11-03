@@ -1,0 +1,19 @@
+{
+  "" : {
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesCoreWebSocket-t.build/Objects-normal/arm64/HermesCoreWebSocket-primary.dia",
+    "emit-module-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesCoreWebSocket-t.build/Objects-normal/arm64/HermesCoreWebSocket-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesCoreWebSocket-t.build/Objects-normal/arm64/HermesCoreWebSocket-primary-emit-module.dia",
+    "pch" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesCoreWebSocket-t.build/Objects-normal/arm64/HermesCoreWebSocket-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesCoreWebSocket-t.build/Objects-normal/arm64/HermesCoreWebSocket-primary.swiftdeps"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/HermesCoreWebSocket/web_socket.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesCoreWebSocket-t.build/Objects-normal/arm64/web_socket.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesCoreWebSocket-t.build/Objects-normal/arm64/web_socket.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesCoreWebSocket-t.build/Objects-normal/arm64/web_socket.dia",
+    "index-unit-output-path" : "/HermesMobile.build/Debug-iphoneos/HermesCoreWebSocket-t.build/Objects-normal/arm64/web_socket.o",
+    "llvm-bc" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesCoreWebSocket-t.build/Objects-normal/arm64/web_socket.bc",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesCoreWebSocket-t.build/Objects-normal/arm64/web_socket.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesCoreWebSocket-t.build/Objects-normal/arm64/web_socket.swiftdeps",
+    "swiftmodule" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesCoreWebSocket-t.build/Objects-normal/arm64/web_socket~partial.swiftmodule"
+  }
+}

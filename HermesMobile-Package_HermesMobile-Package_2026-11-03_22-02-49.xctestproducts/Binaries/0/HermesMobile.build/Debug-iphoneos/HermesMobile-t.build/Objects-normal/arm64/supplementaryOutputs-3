@@ -1,0 +1,23 @@
+{
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/AppEnvironment.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/AppEnvironment.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/AppEnvironment.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/AppEnvironment.dia",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/AppEnvironment.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/AppEnvironment.swiftdeps"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Auth/AuthStore.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/AuthStore.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/AuthStore.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/AuthStore.dia",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/AuthStore.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/AuthStore.swiftdeps"
+  },
+  "/Users/jon/Documents/GitHub/HermesMobile/Sources/Auth/HermesAuthenticator.swift" : {
+    "const-values" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/HermesAuthenticator.swiftconstvalues",
+    "dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/HermesAuthenticator.d",
+    "diagnostics" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/HermesAuthenticator.dia",
+    "object" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/HermesAuthenticator.o",
+    "swift-dependencies" : "/Volumes/Z Slim/xcode/Builds/Inter/HermesMobile.build/Debug-iphoneos/HermesMobile-t.build/Objects-normal/arm64/HermesAuthenticator.swiftdeps"
+  }
+}
