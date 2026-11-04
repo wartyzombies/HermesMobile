@@ -11,6 +11,8 @@ echo "==> swift test"
 swift test 2>&1 | tee log-test.txt
 
 echo "==> xcodebuild (iOS Simulator)"
-xcodebuild -scheme HermesMobile -destination 'platform=iOS Simulator,name=iPhone 15' build 2>&1 | tee log-xcode.txt
+# Generic destination: a named device (e.g. name=iPhone 15) only exists with the
+# matching simulator runtime installed.
+xcodebuild -scheme HermesMobile -destination 'generic/platform=iOS Simulator' build 2>&1 | tee log-xcode.txt
 
 echo "All checks passed."

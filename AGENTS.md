@@ -12,11 +12,14 @@ protocol over a `wss://` WebSocket. Shell / Renderer / Backend split — see
 
 ## Verify the build before trusting any status claim
 
-**As of 2026-10-16 `swift build`, `swift test`, and `xcodebuild` all pass with
-zero warnings.** Round 2 of `fixes.md` is the record of getting it there; the
-code on `master` before that round did **not** compile. Re-run `swift build`
-before trusting any ✅ table — the ✅ marks in `README.md`/`todo.md` were
-aspirational before Round 2 and are now accurate for build/test only.
+**As of 2026-11-04, re-verified on Xcode 27.2 / Swift 6.4.2: `swift build`,
+`swift test` (6 tests, 0 failures), `xcodebuild … -destination
+'generic/platform=iOS Simulator'`, and `xcodebuild … -destination
+'generic/platform=macOS'` all pass with zero warnings.** Round 2 of `fixes.md`
+is the record of getting there; the code on `master` before that round did
+**not** compile. Re-run `swift build` before trusting any ✅ table — the ✅ marks
+in `README.md`/`todo.md` were aspirational before Round 2 and are now accurate
+for build/test only.
 
 Things that were broken and are now fixed (do not regress them):
 
@@ -70,37 +73,112 @@ swift test --filter HermesMobileTests.HermesMobileTests/testReconnectBackoffIsBo
 swift build --target GeneratedModels   # build a single portable target
 xcodebuild -scheme HermesMobile -destination 'generic/platform=iOS Simulator' build
 xcodebuild -scheme HermesMobile -destination 'generic/platform=macOS' build
+Scripts/build-ios-device.sh                        # signed/un-signed device .app
+Scripts/build-ios-device.sh --profile P --ipa      # Ad Hoc / TestFlight .ipa
 ```
 
-> Simulator **runtimes are not installed** on this machine, so name a specific
-> device (`name=iPhone 15`) fails; use `-destination 'generic/platform=iOS Simulator'`.
 > The Xcode build compiles the library; there is no `.xcodeproj` (SwiftPM only).
+> `xcodebuild` never produces a `.app` — the two `Scripts/*-ios-*.sh` wrappers
+> assemble one, because SwiftPM has no application product type (see
+> "Packaging an .app" below).
 
-### SDK pin (macOS 27 SDK vs. the CLT toolchain)
+### Toolchain & SDKs (verified 2026-11-04)
 
-The installed Command Line Tools ship the **macOS 27 SDK**, where SwiftUI's
-`@State` is an `@externalMacro` that needs the `SwiftUIMacros` plugin. The CLT
-toolchain does **not** ship that plugin, so a plain `swift build` fails with:
+**Xcode 27.2 (27B52) is installed at `/Applications/Xcode.app`, and
+`xcode-select -p` points at it**, so `swift` resolves to Swift 6.4.2 from
+Xcode's toolchain and a plain `swift build` / `swift test` works — no `SDKROOT`
+override.
+
+```bash
+xcode-select -p          # /Applications/Xcode.app/Contents/Developer
+xcrun --find swift       # …/XcodeDefault.xctoolchain/usr/bin/swift
+swift --version          # Apple Swift version 6.4.2, target arm64-apple-macosx27.2.0
+xcrun --show-sdk-path    # …/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+```
+
+This supersedes the old workaround of pinning
+`SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk`. That was
+needed when only the Command Line Tools were present: their macOS 27 SDK
+declares SwiftUI's `@State` as an `@externalMacro`, and the CLT toolchain does
+not ship the `SwiftUIMacros` plugin, so `swift build` failed with:
 
 ```
 error: external macro implementation type 'SwiftUIMacros.StateMacro' could not
 be found for macro 'State()'; plugin for module 'SwiftUIMacros' not found
 ```
 
-Only a Swift 6.2-built copy of the plugin exists on this machine
-(`/Applications/Swift Playground.app/…/libSwiftUIMacros.dylib`), and the
-6.4 compiler rejects it ("produced malformed response"). Build against the
-**macOS 26.5 SDK** instead — it declares `@State` as a plain property wrapper
-and needs no plugin:
+Xcode's toolchain **does** ship `libSwiftUIMacros.dylib`, which is why the pin
+is no longer needed. If that error ever comes back, the selected toolchain
+regressed — check `xcode-select -p` and `xcrun --find swift` before reintroducing
+the pin. Note that a **stale `DEVELOPER_DIR`** (shell env or an editor/MCP
+config) makes `xcrun` hard-fail with `missing DEVELOPER_DIR path: …`; it does
+not fall back to the default Xcode.
 
-```bash
-export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
-swift build && swift test
-```
+### Simulator & Xcode build-location state
 
-The permanent fix is installing an Xcode whose toolchain matches the macOS 27
-SDK (Swift 6.4+ shipping `libSwiftUIMacros.dylib`). There are no iOS SDKs
-installed, so iOS builds are not possible on this machine at all.
+- iOS / tvOS / visionOS / DriverKit SDKs are installed (27.2), so
+  `xcodebuild` with `-destination 'generic/platform=iOS Simulator'` compiles.
+  iOS builds **are** possible on this machine now (they were not when only the
+  CLT were installed).
+- Simulator runtime: **iOS 27.0 only** (`xcrun simctl list runtimes`). The
+  iPhone 18 Pro / 18 Pro Max / 17 / 17e / Air and iPad (A16) / Air / Pro devices
+  exist and are usable; anything tagged `iOS 27.2` shows up as `Unavailable`
+  until that runtime is downloaded. `-destination 'name=iPhone 15'` fails
+  because **no such device exists here** — check
+  `xcrun simctl list devices available` before naming one, or use the generic
+  destination. `Scripts/run-ios-sim.sh` (no `--device`) picks a usable iPhone.
+- A **physical iPhone 14 is paired** (`xcrun devicectl list devices`), so device
+  builds and `--install` are testable on this machine.
+- iOS builds are warning-free as of 2026-11-04: `ComposerView` uses
+  `UTType.image.identifier` instead of the deprecated `kUTTypeImage`, so
+  `xcodebuild` for iOS Simulator **and** `generic/platform=iOS` report no
+  warnings either.
+- Xcode's build location must stay at the default DerivedData
+  (`~/Library/Developer/Xcode/DerivedData`). A leftover **custom** location on
+  an unmounted external volume makes every `xcodebuild` fail with
+  `Could not compute dependency graph: … “WORKSPACE@v11_hash=…” doesn’t exist`,
+  and `-derivedDataPath` does **not** override the intermediates path. Diagnose
+  and repair with:
+
+  ```bash
+  defaults read com.apple.dt.Xcode IDEBuildLocationStyle      # want: Default
+  defaults delete com.apple.dt.Xcode IDECustomBuildIntermediatesPath
+  defaults delete com.apple.dt.Xcode IDECustomBuildProductsPath
+  defaults write com.apple.dt.Xcode IDEBuildLocationStyle -string Default
+  ```
+
+## Packaging an .app (SwiftPM has no application product)
+
+`Package.swift` exposes only `.library` products, so there is no `.app` for
+`xcodebuild` to build. Both scripts do the same three-step dance — build the
+package with signing off, link the per-module `.o` files into an executable with
+`swiftc`, write a generated `Info.plist` — and differ only in SDK/arch/signing:
+
+| target | script | output | runnable on |
+| --- | --- | --- | --- |
+| Simulator | `Scripts/run-ios-sim.sh` | `.build/ios-sim/HermesMobile.app` | simulator only |
+| Device (arm64) | `Scripts/build-ios-device.sh` | `.build/ios-device/HermesMobile.app` | a device, **if signed** |
+
+`build-ios-device.sh` signs ad-hoc when no profile is given (inspectable, not
+installable) and takes `--profile`, `--identity`, `--team`, `--entitlements`,
+`--bundle-id`, `--version`, `--build`, `--ipa`, `--install`, `--device`.
+Prerelease checklist:
+
+1. Register the App ID (`--bundle-id`, default `com.hermesmobile.app`) in the
+   developer portal, and the device's UDID.
+2. Download a **Development** or **Ad Hoc** profile; its `TeamIdentifier` and
+   `Entitlements` are read from the profile (`security cms -D` + `plutil`), so
+   passing `--profile` is usually the only signing argument needed.
+3. `Scripts/build-ios-device.sh --profile ~/Downloads/x.mobileprovision --ipa`
+   → `Payload/HermesMobile.app` zipped as `.build/ios-device/HermesMobile-<v>-<b>.ipa`.
+4. `--install` (development profile) or hand the `.ipa` to Xcode → Devices and
+   Simulators / Apple Configurator / `xcrun devicectl device install app`.
+   TestFlight needs an **Apple Distribution** profile and an App Store Connect
+   app record; upload with `xcrun altool --upload-app` or Transporter — a
+   development-signed `.ipa` cannot be uploaded.
+
+Hard rule: do **not** hand-edit the generated `Info.plist` inside the scripts'
+output — it is regenerated on every run; change the heredoc in the script.
 
 ## Code generation (read before regenerating)
 

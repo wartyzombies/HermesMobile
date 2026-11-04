@@ -54,9 +54,10 @@ A native iOS client for the [`hermes serve`](https://hermes-agent.nousresearch.c
 
 ## Requirements
 
-- **Swift 5.10+** toolchain (`swift-tools-version:5.10`)
+- **Swift 5.10+** toolchain (`swift-tools-version:5.10`); verified with Swift 6.4.2
 - **Xcode 15+** on macOS, or a Swift 5.10 toolchain on Linux for the portable modules
 - **iOS 17 / macOS 14** deployment targets
+- A **simulator runtime** (Xcode → Settings → Components) if you want to run the app
 - No external runtime dependencies — Foundation + SwiftUI only
 
 ---
@@ -72,25 +73,25 @@ swift build -c release  # release build
 swift test              # run the unit-test suite
 ```
 
-> **This machine only:** the Command Line Tools ship the macOS 27 SDK, whose
-> SwiftUI `@State` macro needs a `SwiftUIMacros` plugin the toolchain does not
-> provide. Pin the macOS 26.5 SDK (plain property-wrapper `@State`, no plugin):
->
-> ```bash
-> export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
-> swift build && swift test
-> ```
->
+> No environment setup is needed when `xcode-select` points at Xcode: its
+> toolchain ships the `SwiftUIMacros` plugin that SwiftUI's `@State` needs.
+> If only the Command Line Tools are installed, `swift build` fails with
+> `external macro implementation type 'SwiftUIMacros.StateMacro' could not be
+> found`; the old workaround was to pin `SDKROOT` to `MacOSX26.5.sdk`, and the
+> real fix is to select an Xcode (`sudo xcode-select -s /Applications/Xcode.app`).
 > See [`AGENTS.md`](AGENTS.md) for the details.
 
 To build the package with Xcode (there is no `.xcodeproj` — it builds the Swift package scheme directly):
 
 ```bash
-# iOS Simulator (use a generic destination when no simulator runtime is installed)
+# iOS Simulator (generic destination always works; a device name needs an installed runtime)
 xcodebuild -scheme HermesMobile -destination 'generic/platform=iOS Simulator' build
 # macOS
 xcodebuild -scheme HermesMobile -destination 'generic/platform=macOS' build
 ```
+
+`xcodebuild` compiles the package's modules — it cannot produce a `.app`, because
+SwiftPM has no application product type. Use the scripts below to get a bundle.
 
 ### Run on the iOS Simulator
 
@@ -108,6 +109,37 @@ Scripts/run-ios-sim.sh --clean --logs           # rebuild from scratch and strea
 Artifacts go to `.build/ios-sim/` (gitignored). Requires macOS with Xcode and an
 installed Simulator runtime. If `xcode-select` points at the Command Line Tools,
 the script uses `/Applications/Xcode.app` when present.
+
+### Package a device `.app` / `.ipa` for prerelease testing
+
+```bash
+Scripts/build-ios-device.sh                 # ad-hoc .app (inspectable, not installable)
+Scripts/build-ios-device.sh --profile ~/Downloads/Hermes_Development.mobileprovision
+Scripts/build-ios-device.sh --profile x.mobileprovision --ipa      # Ad Hoc / TestFlight
+Scripts/build-ios-device.sh --profile x.mobileprovision --install  # sideload to a paired iPhone
+```
+
+It builds the package for `arm64`/`iphoneos`, links the object files into an
+executable, writes an `Info.plist`, embeds the profile, and codesigns. Outputs
+land in `.build/ios-device/` (gitignored): `HermesMobile.app` and, with `--ipa`,
+`HermesMobile-<version>-<build>.ipa` (`Payload/HermesMobile.app`).
+
+Useful flags: `--configuration Debug|Release`, `--bundle-id`, `--display-name`,
+`--version`, `--build`, `--identity`, `--team`, `--entitlements`, `--out`,
+`--clean`. The Team ID and entitlements are read from the profile, so `--profile`
+is normally the only argument you need.
+
+Prerequisites for a signed build:
+
+1. An App ID registered for your `--bundle-id` (default `com.hermesmobile.app`).
+2. A **Development** profile that includes the target device's UDID, or an
+   **Ad Hoc** profile for other testers' devices (register their UDIDs first).
+3. A signing certificate in the keychain (Xcode → Settings → Accounts).
+
+For **TestFlight**, use an **Apple Distribution** profile plus an App Store
+Connect app record, then upload: `xcrun altool --upload-app -f
+.build/ios-device/HermesMobile-0.1.0-1.ipa -t ios --apiKey … --apiIssuer …`
+(or drop the `.ipa` on Transporter). A development-signed `.ipa` is rejected.
 
 ### Linux (portable modules only — no SwiftUI/UIKit)
 

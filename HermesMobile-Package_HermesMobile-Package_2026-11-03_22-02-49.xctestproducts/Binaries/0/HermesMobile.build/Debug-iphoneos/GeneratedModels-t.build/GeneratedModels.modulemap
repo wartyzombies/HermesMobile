@@ -1,4 +1,0 @@
-module GeneratedModels {
-header "GeneratedModels-Swift.h"
-export *
-}

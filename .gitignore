@@ -16,6 +16,15 @@ xcuserdata/
 # (Scripts/gen_client.py is deprecated; see its docstring.)
 Scripts/generated/
 
+# Test/build output that xcodebuild & friends drop in the repo root
+*.xctestproducts/
+*.xcresult/
+DerivedData/
+Log-Latest
+buildErrors.text
+*-latest.txt
+log-*.txt
+
 # Qodana
 .qodana/
 

@@ -1,7 +1,6 @@
 import SwiftUI
 
 #if canImport(UIKit)
-import MobileCoreServices
 import UniformTypeIdentifiers
 #endif
 #if canImport(PhotosUI)
@@ -155,7 +154,7 @@ private struct ImagePicker: UIViewControllerRepresentable {
         func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
             picker.dismiss(animated: true)
             guard let provider = results.first?.itemProvider else { onSelect(.failure(PickError.noImage)); return }
-            provider.loadItem(forTypeIdentifier: kUTTypeImage as String, options: nil) { item, _ in
+            provider.loadItem(forTypeIdentifier: UTType.image.identifier, options: nil) { item, _ in
                 guard let data = item as? Data, let image = UIImage(data: data) else {
                     DispatchQueue.main.async { self.onSelect(.failure(PickError.noImage)) }; return
                 }

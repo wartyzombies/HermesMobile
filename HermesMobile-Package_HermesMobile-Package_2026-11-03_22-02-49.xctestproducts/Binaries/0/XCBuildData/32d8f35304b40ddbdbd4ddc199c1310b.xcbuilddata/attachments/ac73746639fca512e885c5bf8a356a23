@@ -1,4 +1,0 @@
-module HermesMobile {
-header "HermesMobile-Swift.h"
-export *
-}

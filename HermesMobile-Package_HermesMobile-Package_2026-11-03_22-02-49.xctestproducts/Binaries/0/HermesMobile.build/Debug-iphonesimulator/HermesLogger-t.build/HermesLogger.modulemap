@@ -1,4 +1,0 @@
-module HermesLogger {
-header "HermesLogger-Swift.h"
-export *
-}
